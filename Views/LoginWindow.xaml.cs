@@ -29,6 +29,7 @@ namespace MusicStoreCatalog.Views
         {
             User user = null;
             MainWindow mainWindow = null;
+            string UserRole = "";
             using (var context = new AppDbContext())
             {
                 user = context.Users.FirstOrDefault(u => u.Login == UsernameBox.Text);
@@ -37,8 +38,12 @@ namespace MusicStoreCatalog.Views
             {
                 if (BCrypt.Net.BCrypt.Verify(PasswordBox.Text, user.PasswordHash))
                 {
+                    if (user is Admin) UserRole = "Администратор";
+                    else if (user is Consultant) UserRole = "Консультант";
                     mainWindow = new MainWindow();  
                     mainWindow.UserLogin = UsernameBox.Text;
+                    mainWindow.UserRole = UserRole;
+                    mainWindow.FunWelcomeText();
                     mainWindow.Show();
                     this.Close();
                 }

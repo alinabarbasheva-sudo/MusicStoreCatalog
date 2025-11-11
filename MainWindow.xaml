@@ -37,6 +37,11 @@
                            Foreground="White" BorderThickness="0" HorizontalAlignment="Left" Padding="5"/>
                     <Button x:Name="ProfileBtn" Content="👤 Профиль" Background="Transparent" 
                            Foreground="White" BorderThickness="0" HorizontalAlignment="Left" Padding="5"/>
+                    <!-- Админ-панель -->
+                    <TextBlock Text="АДМИНИСТРИРОВАНИЕ" Foreground="#95a5a6" FontWeight="Bold" Margin="0,20,0,10" Visibility="Collapsed" x:Name="AdminHeader"/>
+                    <Button x:Name="AdminUsersBtn" Content="👥 Пользователи" Background="Transparent" Foreground="White" BorderThickness="0" HorizontalAlignment="Left" Padding="5" Visibility="Collapsed"/>
+                    <Button x:Name="AdminAddInstrumentBtn" Content="➕ Добавить инструмент" Background="Transparent" Foreground="White" BorderThickness="0" HorizontalAlignment="Left" Padding="5" Visibility="Collapsed"/>
+                    <Button x:Name="AdminReportsBtn" Content="📊 Отчеты" Background="Transparent" Foreground="White" BorderThickness="0" HorizontalAlignment="Left" Padding="5" Visibility="Collapsed"/>
                 </StackPanel>
             </Border>
 

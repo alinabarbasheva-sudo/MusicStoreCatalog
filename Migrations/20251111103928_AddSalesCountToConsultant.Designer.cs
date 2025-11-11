@@ -11,8 +11,8 @@ using MusicStoreCatalog.Data;
 namespace MusicStoreCatalog.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251108175533_ForceCreate")]
-    partial class ForceCreate
+    [Migration("20251111103928_AddSalesCountToConsultant")]
+    partial class AddSalesCountToConsultant
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -136,10 +136,10 @@ namespace MusicStoreCatalog.Migrations
                 {
                     b.HasBaseType("MusicStoreCatalog.Models.User");
 
-                    b.Property<int>("salecount")
+                    b.Property<int>("SalesCount")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("specialization")
+                    b.Property<string>("Specialization")
                         .IsRequired()
                         .HasColumnType("TEXT");
 

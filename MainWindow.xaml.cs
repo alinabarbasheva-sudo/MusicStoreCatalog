@@ -19,12 +19,33 @@ namespace MusicStoreCatalog
     public partial class MainWindow : Window
     {
         public string UserLogin { get; set; }
+        public string UserRole { get; set; }
+        
         public MainWindow()
         {
             InitializeComponent();
-            CatalogBtn.Click += (s, e) => MainFrame.Content = new CatalogPage();
+            CatalogBtn.Click += (s, e) =>
+            {
+                var catalogPage = new CatalogPage();
+                catalogPage.SetUserRole(this.UserRole);
+                MainFrame.Content = catalogPage;
+            };
             ProfileBtn.Click += (s, e) => MainFrame.Content = new ProfilePage();
-            WelcomeText.Text = $"Добро пожаловать, {UserLogin}!";
+            FunWelcomeText();
         }
+
+        public void FunWelcomeText()
+        {
+            WelcomeText.Text = $"Добро пожаловать, {UserLogin} ({UserRole})";
+
+            //видимость оперделенных кнопок только для админитратора 
+            AdminHeader.Visibility = UserRole == "Администратор" ? Visibility.Visible : Visibility.Collapsed;
+            AdminUsersBtn.Visibility = UserRole == "Администратор" ? Visibility.Visible : Visibility.Collapsed;
+            AdminAddInstrumentBtn.Visibility = UserRole == "Консультант" ? Visibility.Visible : Visibility.Collapsed;
+            AdminReportsBtn.Visibility = UserRole == "Администратор" ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+
+
     }
 }

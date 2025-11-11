@@ -133,10 +133,10 @@ namespace MusicStoreCatalog.Migrations
                 {
                     b.HasBaseType("MusicStoreCatalog.Models.User");
 
-                    b.Property<int>("salecount")
+                    b.Property<int>("SalesCount")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("specialization")
+                    b.Property<string>("Specialization")
                         .IsRequired()
                         .HasColumnType("TEXT");
 

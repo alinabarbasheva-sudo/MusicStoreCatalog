@@ -8,7 +8,7 @@ namespace MusicStoreCatalog.Models
 {
     public class Consultant : User
     {
-        public string specialization { get; set; }
-        public int salecount { get; set; }
+        public string Specialization { get; set; }
+        public int SalesCount { get; set; }
     }
 }

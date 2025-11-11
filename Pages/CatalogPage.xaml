@@ -25,6 +25,17 @@
                 <DataGridTextColumn Header="Категория" Binding="{Binding Category}" Width="100"/>
                 <DataGridTextColumn Header="Цена" Binding="{Binding Price}" Width="80"/>
                 <DataGridTextColumn Header="В наличии" Binding="{Binding StockQuantity}" Width="80"/>
+                <!--Кнопка для продажи-->
+                <DataGridTemplateColumn Header="Действие" Width="100" x:Name="SellColumn">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="💰 Продать" 
+                        Padding="5,2"
+                        Click="SellButton_Click"
+                        Tag="{Binding Id}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
     </Grid>
