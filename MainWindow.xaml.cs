@@ -31,6 +31,7 @@ namespace MusicStoreCatalog
                 MainFrame.Content = catalogPage;
             };
             ProfileBtn.Click += (s, e) => MainFrame.Content = new ProfilePage();
+            AdminUsersBtn.Click += (s, e) => MainFrame.Content = new UsersPage();
             FunWelcomeText();
         }
 

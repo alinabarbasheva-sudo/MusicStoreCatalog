@@ -55,18 +55,21 @@ namespace MusicStoreCatalog.Services
                 context.Instruments.AddRange(instruments);
                 context.SaveChanges();
             }
-            var consultant = new Consultant
+            if (!context.Users.Any(u => u.Login == "consultant"))
             {
-                Login = "consultant",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("consultant"),
-                FirstName = "Тестовый",
-                LastName = "Консультант",
-                PhoneNumber = "11111111111",
-                Specialization = "Гитары",
-                SalesCount = 0
-            };
-            context.Users.Add(consultant);
-            context.SaveChanges();
+                var consultant = new Consultant
+                {
+                    Login = "consultant",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("consultant"),
+                    FirstName = "Тестовый",
+                    LastName = "Консультант",
+                    PhoneNumber = "11111111111",
+                    Specialization = "Гитары",
+                    SalesCount = 0
+                };
+                context.Users.Add(consultant);
+                context.SaveChanges();
+            }
         }
     }
     }

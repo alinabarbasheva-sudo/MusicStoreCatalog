@@ -11,7 +11,6 @@ namespace MusicStoreCatalog
     {
         protected override void OnStartup(StartupEventArgs e)
         {
-            SeedService.CreateFirstAdmin("admin", "admin");
             base.OnStartup(e);
         }
     }
