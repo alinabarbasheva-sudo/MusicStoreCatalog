@@ -1,9 +1,10 @@
-﻿using System.Windows;
-using System.Windows.Controls;
-using MusicStoreCatalog.Data;
+﻿using MusicStoreCatalog.Data;
 using MusicStoreCatalog.Models;
-using System.Linq;
 using MusicStoreCatalog.Views;
+using System;
+using System.Linq;
+using System.Windows;
+using System.Windows.Controls;
 
 namespace MusicStoreCatalog.Pages
 {
@@ -18,9 +19,16 @@ namespace MusicStoreCatalog.Pages
 
         private void LoadUsers()
         {
-            using var context = new AppDbContext();
-            var consultants = context.Users.OfType<Consultant>().ToList();
-            UsersGrid.ItemsSource = consultants;
+            try
+            {
+                using var context = new AppDbContext();
+                var consultants = context.Users.OfType<Consultant>().ToList();
+                UsersGrid.ItemsSource = consultants;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки пользователей: {ex.Message}", "Ошибка");
+            }
         }
 
         private void AddUserBtn_Click(object sender, RoutedEventArgs e)
@@ -28,7 +36,71 @@ namespace MusicStoreCatalog.Pages
             var addWindow = new AddConsultantWindow();
             if (addWindow.ShowDialog() == true)
             {
-                LoadUsers(); // Обновить список
+                LoadUsers();
+            }
+        }
+
+        // ===== ДОБАВЛЯЕМ ЭТОТ МЕТОД =====
+        public void DeleteUserBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            if (button?.Tag != null && int.TryParse(button.Tag.ToString(), out int userId))
+            {
+                DeleteConsultant(userId);
+            }
+        }
+        // =================================
+
+        private void DeleteConsultant(int userId)
+        {
+            try
+            {
+                // Подтверждение удаления
+                var result = MessageBox.Show(
+                    "Вы уверены, что хотите удалить этого консультанта?\n" +
+                    "Все связанные заявки также будут удалены.",
+                    "Подтверждение удаления",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (result != MessageBoxResult.Yes)
+                    return;
+
+                using var context = new AppDbContext();
+
+                // Находим консультанта
+                var consultant = context.Users.OfType<Consultant>().FirstOrDefault(c => c.ID == userId);
+
+                if (consultant == null)
+                {
+                    MessageBox.Show("Консультант не найден", "Ошибка");
+                    return;
+                }
+
+                string consultantInfo = $"{consultant.FirstName} {consultant.LastName} ({consultant.Login})";
+
+                // Удаляем связанные заявки
+                var orders = context.OrderRequests.Where(o => o.RequestedById == userId).ToList();
+                context.OrderRequests.RemoveRange(orders);
+
+                // Удаляем расписание
+                var schedules = context.Schedules.Where(s => s.UserId == userId).ToList();
+                context.Schedules.RemoveRange(schedules);
+
+                // Удаляем консультанта
+                context.Users.Remove(consultant);
+                context.SaveChanges();
+
+                MessageBox.Show($"Консультант {consultantInfo} успешно удален",
+                              "Успех",
+                              MessageBoxButton.OK,
+                              MessageBoxImage.Information);
+
+                LoadUsers(); // Обновляем список
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка удаления: {ex.Message}", "Ошибка");
             }
         }
     }

@@ -71,9 +71,12 @@
             </Border>
 
             <!-- Кнопки -->
+            <!-- Замените кнопки в самом низу ProfilePage.xaml -->
             <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
-                <Button Content="✏️ Редактировать" Padding="15,8" Background="#3498db" Foreground="White"/>
-                <Button Content="🔒 Сменить пароль" Padding="15,8" Margin="10,0,0,0" Background="#2ecc71" Foreground="White"/>
+                <Button Content="✏️ Редактировать" Padding="15,8" Background="#3498db" Foreground="White"
+            Click="EditBtn_Click"/>
+                <Button Content="🔒 Сменить пароль" Padding="15,8" Margin="10,0,0,0" 
+            Background="#2ecc71" Foreground="White" Click="ChangePasswordBtn_Click"/>
             </StackPanel>
         </StackPanel>
     </ScrollViewer>

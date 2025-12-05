@@ -42,6 +42,8 @@
                     <Button x:Name="AdminUsersBtn" Content="👥 Пользователи" Background="Transparent" Foreground="White" BorderThickness="0" HorizontalAlignment="Left" Padding="5" Visibility="Collapsed"/>
                     <Button x:Name="AdminAddInstrumentBtn" Content="➕ Добавить инструмент" Background="Transparent" Foreground="White" BorderThickness="0" HorizontalAlignment="Left" Padding="5" Visibility="Collapsed"/>
                     <Button x:Name="AdminReportsBtn" Content="📊 Отчеты" Background="Transparent" Foreground="White" BorderThickness="0" HorizontalAlignment="Left" Padding="5" Visibility="Collapsed"/>
+                    <Button x:Name="AdminOrdersBtn" Content="📋 Заявки на заказ" Background="Transparent" Foreground="White"  BorderThickness="0"  HorizontalAlignment="Left"  Padding="5"/>
+
                 </StackPanel>
             </Border>
 

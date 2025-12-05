@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MusicStoreCatalog.Data;
 
@@ -10,9 +11,11 @@ using MusicStoreCatalog.Data;
 namespace MusicStoreCatalog.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251205162458_AddScheduleTableSimple")]
+    partial class AddScheduleTableSimple
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.10");
@@ -54,68 +57,6 @@ namespace MusicStoreCatalog.Migrations
                     b.ToTable("Instruments");
                 });
 
-            modelBuilder.Entity("MusicStoreCatalog.Models.OrderRequest", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("ApprovalDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("ApprovedById")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Brand")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("EstimatedPrice")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("InstrumentId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("InstrumentName")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Model")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Notes")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("RequestDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("RequestedById")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ApprovedById");
-
-                    b.HasIndex("InstrumentId");
-
-                    b.HasIndex("RequestedById");
-
-                    b.ToTable("OrderRequests");
-                });
-
             modelBuilder.Entity("MusicStoreCatalog.Models.Schedule", b =>
                 {
                     b.Property<int>("Id")
@@ -138,8 +79,6 @@ namespace MusicStoreCatalog.Migrations
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("Schedules");
                 });
@@ -203,42 +142,6 @@ namespace MusicStoreCatalog.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasDiscriminator().HasValue("Consultant");
-                });
-
-            modelBuilder.Entity("MusicStoreCatalog.Models.OrderRequest", b =>
-                {
-                    b.HasOne("MusicStoreCatalog.Models.User", "ApprovedBy")
-                        .WithMany()
-                        .HasForeignKey("ApprovedById")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("MusicStoreCatalog.Models.Instrument", "Instrument")
-                        .WithMany()
-                        .HasForeignKey("InstrumentId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("MusicStoreCatalog.Models.User", "RequestedBy")
-                        .WithMany()
-                        .HasForeignKey("RequestedById")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("ApprovedBy");
-
-                    b.Navigation("Instrument");
-
-                    b.Navigation("RequestedBy");
-                });
-
-            modelBuilder.Entity("MusicStoreCatalog.Models.Schedule", b =>
-                {
-                    b.HasOne("MusicStoreCatalog.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 #pragma warning restore 612, 618
         }

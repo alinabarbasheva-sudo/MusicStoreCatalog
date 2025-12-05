@@ -24,35 +24,52 @@ namespace MusicStoreCatalog.Views
         {
             InitializeComponent();
         }
-    
-    private void LoginButton_Click(object sender, RoutedEventArgs e)
+
+        private void LoginButton_Click(object sender, RoutedEventArgs e)
         {
             User user = null;
             MainWindow mainWindow = null;
             string UserRole = "";
+            string UserSpecialization = ""; // Добавляем
+
             using (var context = new AppDbContext())
             {
                 user = context.Users.FirstOrDefault(u => u.Login == UsernameBox.Text);
             }
+
             if (user != null)
             {
                 if (BCrypt.Net.BCrypt.Verify(PasswordBox.Text, user.PasswordHash))
                 {
-                    if (user is Admin) UserRole = "Администратор";
-                    else if (user is Consultant) UserRole = "Консультант";
-                    mainWindow = new MainWindow();  
+                    if (user is Admin)
+                    {
+                        UserRole = "Администратор";
+                        UserSpecialization = ""; // У админа нет специализации
+                    }
+                    else if (user is Consultant consultant)
+                    {
+                        UserRole = "Консультант";
+                        UserSpecialization = consultant.Specialization; // Сохраняем специализацию
+                    }
+
+                    mainWindow = new MainWindow();
                     mainWindow.UserLogin = UsernameBox.Text;
                     mainWindow.UserRole = UserRole;
+                    mainWindow.UserId = user.ID;
+                    mainWindow.UserSpecialization = UserSpecialization; // Передаем специализацию
                     mainWindow.FunWelcomeText();
                     mainWindow.Show();
                     this.Close();
                 }
+                else
+                {
+                    MessageBox.Show("Неправильный логин или пароль");
+                }
             }
             else
             {
-                MessageBox.Show("Неправильный логин или пароль");
+                MessageBox.Show("Неправильный логин или пароль");
             }
-
         }
     }
 }

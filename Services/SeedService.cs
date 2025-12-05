@@ -1,11 +1,12 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using MusicStoreCatalog.Data;
+using MusicStoreCatalog.Models;
+using MusicStoreCatalog.Views;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using MusicStoreCatalog.Data;
-using MusicStoreCatalog.Models;
-using MusicStoreCatalog.Views;
 
 namespace MusicStoreCatalog.Services
 {
@@ -71,5 +72,6 @@ namespace MusicStoreCatalog.Services
                 context.SaveChanges();
             }
         }
+       
     }
     }
