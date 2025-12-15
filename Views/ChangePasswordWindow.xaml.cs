@@ -45,7 +45,8 @@ namespace MusicStoreCatalog.Views
 
             if (user != null)
             {
-                // Проверяем текущий пароль (если введен)
+                // Для администратора не проверяем текущий пароль
+                // (или можно сделать опциональной проверку)
                 if (!string.IsNullOrWhiteSpace(CurrentPasswordBox.Password))
                 {
                     if (!BCrypt.Net.BCrypt.Verify(CurrentPasswordBox.Password, user.PasswordHash))
@@ -60,6 +61,7 @@ namespace MusicStoreCatalog.Views
 
                 MessageBox.Show("Пароль успешно изменен", "Успех",
                               MessageBoxButton.OK, MessageBoxImage.Information);
+                this.DialogResult = true;
                 this.Close();
             }
             else
