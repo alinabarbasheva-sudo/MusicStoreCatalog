@@ -33,7 +33,7 @@ namespace MusicStoreCatalog
                 var catalogPage = new CatalogPage();
                 catalogPage.SetUserRole(this.UserRole);
                 catalogPage.SetUserId(this.UserId);
-                catalogPage.SetUserSpecialization(this.UserSpecialization); // Передаем специализацию
+                catalogPage.SetUserSpecialization(this.UserSpecialization);
                 MainFrame.Content = catalogPage;
             };
 

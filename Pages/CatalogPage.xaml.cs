@@ -49,7 +49,7 @@ namespace MusicStoreCatalog.Pages
 
             if (UserRole == "Консультант" && !string.IsNullOrEmpty(specialization))
             {
-                TitleText.Text = $"🎸 Каталог инструментов ({specialization})";
+                TitleText.Text = $"?? Каталог инструментов ({specialization})";
             }
         }
 
@@ -57,21 +57,24 @@ namespace MusicStoreCatalog.Pages
         {
             if (UserRole == "Консультант")
             {
-                // Консультант видит обе кнопки
+                // Консультант видит кнопки продажи и заказа
                 SellColumn.Visibility = Visibility.Visible;
                 OrderColumn.Visibility = Visibility.Visible;
+                DeleteColumn.Visibility = Visibility.Collapsed;
             }
             else if (UserRole == "Администратор")
             {
-                // Админ видит только кнопку заказа
+                // Админ видит кнопку заказа и кнопку удаления
                 SellColumn.Visibility = Visibility.Collapsed;
                 OrderColumn.Visibility = Visibility.Visible;
+                DeleteColumn.Visibility = Visibility.Visible;
             }
             else
             {
                 // Остальные не видят ничего
                 SellColumn.Visibility = Visibility.Collapsed;
                 OrderColumn.Visibility = Visibility.Collapsed;
+                DeleteColumn.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -170,7 +173,7 @@ namespace MusicStoreCatalog.Pages
                     context.SaveChanges();
                     LoadInstruments();
 
-                    MessageBox.Show($"✅ Продажа завершена!\n\n" +
+                    MessageBox.Show($"? Продажа завершена!\n\n" +
                                   $"{instrument.Brand} {instrument.Model}\n" +
                                   $"Осталось в наличии: {instrument.StockQuantity} шт.",
                                   "Успех",
@@ -179,7 +182,7 @@ namespace MusicStoreCatalog.Pages
                 }
                 else
                 {
-                    MessageBox.Show("❌ Этот инструмент закончился на складе",
+                    MessageBox.Show("? Этот инструмент закончился на складе",
                                   "Ошибка",
                                   MessageBoxButton.OK,
                                   MessageBoxImage.Warning);
@@ -205,7 +208,6 @@ namespace MusicStoreCatalog.Pages
         {
             try
             {
-                // Проверяем, что ID пользователя установлен
                 if (_userId == 0)
                 {
                     MessageBox.Show("Ошибка: ID пользователя не установлен",
@@ -254,7 +256,7 @@ namespace MusicStoreCatalog.Pages
                         existingOrder.Quantity += 1;
                         context.SaveChanges();
 
-                        MessageBox.Show($"✅ Заявка обновлена!\n\n" +
+                        MessageBox.Show($"? Заявка обновлена!\n\n" +
                                       $"Инструмент: {instrument.Brand} {instrument.Model}\n" +
                                       $"Теперь в заявке: {existingOrder.Quantity} шт.",
                                       "Успех",
@@ -283,10 +285,10 @@ namespace MusicStoreCatalog.Pages
                 context.OrderRequests.Add(orderRequest);
                 context.SaveChanges();
 
-                MessageBox.Show($"✅ Заявка на заказ создана!\n\n" +
+                MessageBox.Show($"? Заявка на заказ создана!\n\n" +
                               $"Инструмент: {instrument.Brand} {instrument.Model}\n" +
                               $"Количество: 1 шт.\n" +
-                              $"Цена: {instrument.Price} br\n\n" + 
+                              $"Цена: {instrument.Price} br\n\n" +
                               $"Заявка будет рассмотрена администратором.",
                               "Успех",
                               MessageBoxButton.OK,
@@ -295,6 +297,99 @@ namespace MusicStoreCatalog.Pages
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка при создании заявки: {ex.Message}", "Ошибка");
+            }
+        }
+
+        // ===== НОВЫЙ ОБРАБОТЧИК КНОПКИ УДАЛЕНИЯ =====
+        private void DeleteButton_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            if (button?.Tag != null && int.TryParse(button.Tag.ToString(), out int instrumentId))
+            {
+                DeleteInstrument(instrumentId);
+            }
+        }
+
+        private void DeleteInstrument(int instrumentId)
+        {
+            // Проверяем, что пользователь - администратор
+            if (UserRole != "Администратор")
+            {
+                MessageBox.Show("Только администратор может удалять инструменты",
+                              "Ошибка",
+                              MessageBoxButton.OK,
+                              MessageBoxImage.Warning);
+                return;
+            }
+
+            try
+            {
+                using var context = new AppDbContext();
+                var instrument = context.Instruments.FirstOrDefault(i => i.Id == instrumentId);
+
+                if (instrument == null)
+                {
+                    MessageBox.Show("Инструмент не найден", "Ошибка");
+                    return;
+                }
+
+                // Проверяем, есть ли активные заявки на этот инструмент
+                var activeOrders = context.OrderRequests
+                    .Where(o => o.InstrumentId == instrumentId && o.Status == "Pending")
+                    .ToList();
+
+                if (activeOrders.Any())
+                {
+                    var result = MessageBox.Show(
+                        $"На этот инструмент есть активные заявки в ожидании ({activeOrders.Count} шт.).\n" +
+                        "Если вы удалите инструмент, эти заявки будут отклонены.\n\n" +
+                        "Продолжить удаление?",
+                        "Предупреждение",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Warning);
+
+                    if (result != MessageBoxResult.Yes)
+                        return;
+                }
+
+                // Подтверждение удаления
+                var confirmResult = MessageBox.Show(
+                    $"Вы уверены, что хотите удалить инструмент?\n\n" +
+                    $"{instrument.Brand} {instrument.Model}\n" +
+                    $"Категория: {instrument.Category}\n" +
+                    $"Цена: {instrument.Price} br\n" +
+                    $"В наличии: {instrument.StockQuantity} шт.",
+                    "Подтверждение удаления",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (confirmResult != MessageBoxResult.Yes)
+                    return;
+
+                // Удаляем связанные заявки (Pending)
+                var ordersToDelete = context.OrderRequests
+                    .Where(o => o.InstrumentId == instrumentId)
+                    .ToList();
+
+                context.OrderRequests.RemoveRange(ordersToDelete);
+
+                // Удаляем сам инструмент
+                context.Instruments.Remove(instrument);
+                context.SaveChanges();
+
+                MessageBox.Show($"✅ Инструмент успешно удален!\n\n" +
+                              $"{instrument.Brand} {instrument.Model}\n" +
+                              $"Удалено заявок: {ordersToDelete.Count} шт.",
+                              "Успех",
+                              MessageBoxButton.OK,
+                              MessageBoxImage.Information);
+
+                // Обновляем список инструментов
+                LoadInstruments();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"❌ Ошибка при удалении: {ex.Message}", "Ошибка");
             }
         }
     }

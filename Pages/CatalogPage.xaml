@@ -13,7 +13,7 @@
         <!-- Заголовок -->
         <TextBlock x:Name="TitleText"
                    Grid.Row="0" 
-                   Text="🎸 Каталог инструментов" 
+                   Text="?? Каталог инструментов" 
                    FontSize="18" 
                    FontWeight="Bold" 
                    Margin="0,0,0,10"/>
@@ -26,7 +26,7 @@
                 Margin="0,0,0,10">
             <StackPanel Orientation="Horizontal">
                 <Button x:Name="RefreshBtn" 
-                        Content="🔄 Обновить каталог" 
+                        Content="?? Обновить каталог" 
                         Padding="10,6"
                         FontWeight="SemiBold"
                         Click="RefreshBtn_Click"/>
@@ -47,6 +47,7 @@
                   IsReadOnly="True">
 
             <DataGrid.Columns>
+                <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="50"/>
                 <DataGridTextColumn Header="Бренд" Binding="{Binding Brand}" Width="120"/>
                 <DataGridTextColumn Header="Модель" Binding="{Binding Model}" Width="120"/>
                 <DataGridTextColumn Header="Категория" Binding="{Binding Category}" Width="100"/>
@@ -59,11 +60,11 @@
                                         Width="100">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Button Content="💰 Продать" 
+                            <Button Content="?? Продать" 
                                     Padding="8,4"
                                     Tag="{Binding Id}"
                                     Click="SellButton_Click" 
-                                Background="#2ecc71"
+                                    Background="#2ecc71"
                                     Foreground="White"
                                     FontWeight="SemiBold"
                                     Cursor="Hand"/>
@@ -76,17 +77,36 @@
                                         Header="Заказ" 
                                         Width="100"
                                         Visibility="Visible">
-                    <!-- По умолчанию видна -->
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Button Content="📦 Заказать" 
+                            <Button Content="?? Заказать" 
                                     Padding="8,4"
                                     Tag="{Binding Id}"
                                     Click="OrderButton_Click" 
-                                Background="#3498db"
+                                    Background="#3498db"
                                     Foreground="White"
                                     FontWeight="SemiBold"
                                     Cursor="Hand"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Кнопка для удаления (только для администратора) -->
+                <DataGridTemplateColumn x:Name="DeleteColumn" 
+                                        Header="Удаление" 
+                                        Width="100"
+                                        Visibility="Collapsed">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="?? Удалить" 
+                                    Padding="8,4"
+                                    Tag="{Binding Id}"
+                                    Click="DeleteButton_Click" 
+                                    Background="#e74c3c"
+                                    Foreground="White"
+                                    FontWeight="SemiBold"
+                                    Cursor="Hand"
+                                    ToolTip="Удалить инструмент из каталога"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
