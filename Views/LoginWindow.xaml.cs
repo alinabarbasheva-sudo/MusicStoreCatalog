@@ -1,28 +1,45 @@
 ﻿using MusicStoreCatalog.Data;
 using MusicStoreCatalog.Models;
+using MusicStoreCatalog.Services;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
+
 namespace MusicStoreCatalog.Views
 {
-    /// <summary>
-    /// Логика взаимодействия для LoginWindow.xaml
-    /// </summary>
     public partial class LoginWindow : Window
     {
         public LoginWindow()
         {
             InitializeComponent();
+
+            // Проверяем, первый ли запуск
+            if (SeedService.IsFirstRun())
+            {
+                SeedService.CreateFirstAdmin("admin", "admin");
+            }
+
+            // Фокус на поле логина при загрузке
+            Loaded += (s, e) =>
+            {
+                UsernameBox.Focus();
+
+            };
+
+            // Обработка нажатия Enter
+            UsernameBox.KeyDown += (s, e) =>
+            {
+                if (e.Key == Key.Enter)
+                    PasswordBox.Focus();
+            };
+
+            PasswordBox.KeyDown += (s, e) =>
+            {
+                if (e.Key == Key.Enter)
+                    LoginButton_Click(null, null);
+            };
         }
 
         private void LoginButton_Click(object sender, RoutedEventArgs e)
@@ -30,7 +47,7 @@ namespace MusicStoreCatalog.Views
             User user = null;
             MainWindow mainWindow = null;
             string UserRole = "";
-            string UserSpecialization = ""; // Добавляем
+            string UserSpecialization = "";
 
             using (var context = new AppDbContext())
             {
@@ -39,36 +56,41 @@ namespace MusicStoreCatalog.Views
 
             if (user != null)
             {
-                if (BCrypt.Net.BCrypt.Verify(PasswordBox.Text, user.PasswordHash))
+                // ВАЖНО: Используем PasswordBox.Password, а не .Text
+                if (BCrypt.Net.BCrypt.Verify(PasswordBox.Password, user.PasswordHash))
                 {
                     if (user is Admin)
                     {
                         UserRole = "Администратор";
-                        UserSpecialization = ""; // У админа нет специализации
+                        UserSpecialization = "";
                     }
                     else if (user is Consultant consultant)
                     {
                         UserRole = "Консультант";
-                        UserSpecialization = consultant.Specialization; // Сохраняем специализацию
+                        UserSpecialization = consultant.Specialization;
                     }
 
                     mainWindow = new MainWindow();
                     mainWindow.UserLogin = UsernameBox.Text;
                     mainWindow.UserRole = UserRole;
                     mainWindow.UserId = user.ID;
-                    mainWindow.UserSpecialization = UserSpecialization; // Передаем специализацию
+                    mainWindow.UserSpecialization = UserSpecialization;
                     mainWindow.FunWelcomeText();
                     mainWindow.Show();
                     this.Close();
                 }
                 else
                 {
-                    MessageBox.Show("Неправильный логин или пароль");
+                    MessageBox.Show("Неверный пароль");
+                    PasswordBox.Focus();
+                    PasswordBox.SelectAll();
                 }
             }
             else
             {
-                MessageBox.Show("Неправильный логин или пароль");
+                MessageBox.Show("Пользователь не найден");
+                UsernameBox.Focus();
+                UsernameBox.SelectAll();
             }
         }
     }
