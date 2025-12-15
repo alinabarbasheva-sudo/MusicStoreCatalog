@@ -1,4 +1,5 @@
-﻿using MusicStoreCatalog.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using MusicStoreCatalog.Data;
 using MusicStoreCatalog.Models;
 using System;
 using System.Linq;
@@ -10,6 +11,8 @@ namespace MusicStoreCatalog.Pages
 {
     public partial class OrdersPage : UserControl
     {
+        private int _currentUserId; // Добавьте это поле
+
         public OrdersPage()
         {
             InitializeComponent();
@@ -22,9 +25,19 @@ namespace MusicStoreCatalog.Pages
             // Загружаем данные при открытии
             LoadPendingOrders();
             LoadProcessedOrders();
-
-            // Обновляем заголовки вкладок с количеством
             UpdateTabHeaders();
+        }
+
+        // Добавьте этот метод для установки UserId
+        public void SetCurrentUserId(int userId)
+        {
+            _currentUserId = userId;
+        }
+
+        // Обновите GetCurrentUserId:
+        private int? GetCurrentUserId()
+        {
+            return _currentUserId > 0 ? _currentUserId : (int?)null;
         }
 
         // === ЗАЯВКИ В ОЖИДАНИИ ===
@@ -64,13 +77,21 @@ namespace MusicStoreCatalog.Pages
             {
                 using var context = new AppDbContext();
 
-                IQueryable<OrderRequest> query = context.OrderRequests
+                // ВАЖНО: Загружаем связанные данные для отображения
+                var query = context.OrderRequests
+                    .Include(o => o.Instrument) // Загружаем инструмент
+                    .Include(o => o.RequestedBy) // Загружаем пользователя
                     .Where(or => or.Status == "Approved" || or.Status == "Rejected");
 
                 // Фильтрация по статусу
                 if (statusFilter != "Все")
                 {
-                    string status = statusFilter == "Подтверждено" ? "Approved" : "Rejected";
+                    string status = statusFilter switch
+                    {
+                        "Только подтвержденные" => "Approved",
+                        "Только отклоненные" => "Rejected",
+                        _ => statusFilter
+                    };
                     query = query.Where(or => or.Status == status);
                 }
 
@@ -199,91 +220,135 @@ namespace MusicStoreCatalog.Pages
 
                 if (result != MessageBoxResult.Yes) return;
 
-                using var context = new AppDbContext();
-                var order = context.OrderRequests.FirstOrDefault(o => o.Id == orderId);
-
-                if (order == null)
+                using (var context = new AppDbContext())
                 {
-                    MessageBox.Show("Заявка не найдена", "Ошибка");
-                    return;
-                }
+                    var orderToProcess = context.OrderRequests
+                        .Include(o => o.Instrument) // ВАЖНО: включаем связанные данные
+                        .FirstOrDefault(o => o.Id == orderId);
 
-                // Проверяем, что заявка еще в статусе Pending
-                if (order.Status != "Pending")
-                {
-                    string currentStatusText = GetStatusText(order.Status);
-                    MessageBox.Show($"Эта заявка уже была {currentStatusText}",
-                                  "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
-                }
-
-                // Обновляем статус
-                order.Status = newStatus;
-                order.ApprovalDate = DateTime.Now;
-                // TODO: установить ApprovedById когда будет ID текущего админа
-
-                // Если заявка подтверждена - обновляем склад
-                if (newStatus == "Approved")
-                {
-                    if (order.InstrumentId.HasValue)
+                    if (orderToProcess == null)
                     {
-                        var instrument = context.Instruments.FirstOrDefault(i => i.Id == order.InstrumentId.Value);
-                        if (instrument != null)
-                        {
-                            instrument.StockQuantity += order.Quantity;
-
-                            MessageBox.Show(
-                                $"✅ Инструмент обновлен!\n\n" +
-                                $"{instrument.Brand} {instrument.Model}\n" +
-                                $"Добавлено: {order.Quantity} шт.\n" +
-                                $"Теперь в наличии: {instrument.StockQuantity} шт.",
-                                "Склад обновлен",
-                                MessageBoxButton.OK,
-                                MessageBoxImage.Information);
-                        }
+                        MessageBox.Show("Заявка не найдена", "Ошибка");
+                        return;
                     }
-                    else
+
+                    // Проверяем, что заявка еще в статусе Pending
+                    if (orderToProcess.Status != "Pending")
                     {
-                        var newInstrument = new Instrument
-                        {
-                            Brand = order.Brand,
-                            Model = order.Model,
-                            Category = order.Category,
-                            Price = order.EstimatedPrice,
-                            StockQuantity = order.Quantity,
-                            Description = string.IsNullOrEmpty(order.Notes)
-                                ? $"Добавлено по заявке #{orderId}"
-                                : order.Notes,
-                            SerialNumber = $"ORDER-{orderId}"
-                        };
-                        context.Instruments.Add(newInstrument);
-
-                        MessageBox.Show(
-                            $"✅ Новый инструмент добавлен!\n\n" +
-                            $"{order.Brand} {order.Model}\n" +
-                            $"Количество: {order.Quantity} шт.\n" +
-                            $"Цена: {order.EstimatedPrice:C}",
-                            "Новый инструмент",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Information);
+                        string currentStatusText = GetStatusText(orderToProcess.Status);
+                        MessageBox.Show($"Эта заявка уже была {currentStatusText}",
+                                      "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+                        return;
                     }
+
+                    // Обновляем статус
+                    orderToProcess.Status = newStatus;
+                    orderToProcess.ApprovalDate = DateTime.Now;
+                    orderToProcess.ApprovedById = _currentUserId > 0 ? _currentUserId : (int?)null; // Прямое использование
+
+                    // Если заявка подтверждена - обновляем склад
+                    if (newStatus == "Approved")
+                    {
+                        ProcessApprovedOrder(context, orderToProcess, orderId);
+                    }
+
+                    context.SaveChanges();
+
+                    // Обновляем обе таблицы
+                    LoadPendingOrders();
+                    LoadProcessedOrders(GetSelectedProcessedFilter());
+                    UpdateTabHeaders();
+
+                    MessageBox.Show($"✅ Заявка #{orderId} успешно {statusText}!\n\nЗаявка перемещена во вкладку 'Обработанные'.",
+                                  "Успех",
+                                  MessageBoxButton.OK,
+                                  MessageBoxImage.Information);
                 }
-
-                context.SaveChanges();
-
-                // ОБНОВЛЯЕМ ОБЕ ТАБЛИЦЫ И ЗАГОЛОВКИ
-                LoadPendingOrders();
-                LoadProcessedOrders(GetSelectedProcessedFilter());
-                UpdateTabHeaders();
-
-                MessageBox.Show($"✅ Заявка #{orderId} успешно {statusText}!\n\nЗаявка перемещена во вкладку 'Обработанные'.",
-                              "Успех",
-                              MessageBoxButton.OK,
-                              MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"❌ Ошибка: {ex.Message}", "Ошибка");
+            }
+        }
+
+        // ===== НОВЫЙ МЕТОД ДЛЯ ОБРАБОТКИ ПОДТВЕРЖДЕННЫХ ЗАЯВОК =====
+        private void ProcessApprovedOrder(AppDbContext context, OrderRequest order, int originalOrderId)
+        {
+            // Находим все заявки на этот же инструмент с тем же статусом Pending
+            var similarOrders = context.OrderRequests
+                .Where(o => o.InstrumentId == order.InstrumentId &&
+                           o.Status == "Pending" &&
+                           o.Id != originalOrderId)
+                .ToList();
+
+            // Суммируем количества
+            int totalQuantity = order.Quantity;
+            foreach (var similarOrder in similarOrders)
+            {
+                totalQuantity += similarOrder.Quantity;
+                // Помечаем похожие заявки как обработанные
+                similarOrder.Status = "Approved";
+                similarOrder.ApprovalDate = DateTime.Now;
+                similarOrder.Notes += $" (Объединена с заявкой #{originalOrderId})";
+            }
+
+            if (order.InstrumentId.HasValue)
+            {
+                var instrument = context.Instruments.FirstOrDefault(i => i.Id == order.InstrumentId.Value);
+                if (instrument != null)
+                {
+                    int oldQuantity = instrument.StockQuantity;
+                    instrument.StockQuantity += totalQuantity;
+
+                    string similarOrdersText = similarOrders.Count > 0
+                        ? $"\n📊 Объединено с {similarOrders.Count} другими заявками (+{similarOrders.Sum(o => o.Quantity)} шт.)"
+                        : "";
+
+                    MessageBox.Show(
+                        $"✅ Инструмент обновлен!{similarOrdersText}\n\n" +
+                        $"{instrument.Brand} {instrument.Model}\n" +
+                        $"Было: {oldQuantity} шт.\n" +
+                        $"Добавлено: {totalQuantity} шт.\n" +
+                        $"Стало: {instrument.StockQuantity} шт.",
+                        "Склад обновлен",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
+                else
+                {
+                    MessageBox.Show("⚠️ Инструмент не найден в каталоге", "Предупреждение");
+                }
+            }
+            else
+            {
+                // Создаем новый инструмент если его нет в каталоге
+                var newInstrument = new Instrument
+                {
+                    Brand = order.Brand,
+                    Model = order.Model,
+                    Category = order.Category,
+                    Price = order.EstimatedPrice,
+                    StockQuantity = totalQuantity,
+                    Description = string.IsNullOrEmpty(order.Notes)
+                        ? $"Добавлено по заявке #{originalOrderId}"
+                        : order.Notes,
+                    SerialNumber = $"ORDER-{originalOrderId}"
+                };
+                context.Instruments.Add(newInstrument);
+
+                string similarOrdersText = similarOrders.Count > 0
+                    ? $"\n📊 Объединено с {similarOrders.Count} другими заявками"
+                    : "";
+
+                MessageBox.Show(
+                    $"✅ Новый инструмент добавлен!{similarOrdersText}\n\n" +
+                    $"{order.Brand} {order.Model}\n" +
+                    $"Категория: {order.Category}\n" +
+                    $"Количество: {totalQuantity} шт.\n" +
+                    $"Цена: {order.EstimatedPrice:C}",
+                    "Новый инструмент",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
             }
         }
 
@@ -297,6 +362,7 @@ namespace MusicStoreCatalog.Pages
                 _ => status
             };
         }
+
 
         // === ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ДЛЯ ОБНОВЛЕНИЯ ИНТЕРФЕЙСА ===
 

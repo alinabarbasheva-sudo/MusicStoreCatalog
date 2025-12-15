@@ -19,23 +19,17 @@ namespace MusicStoreCatalog.Pages
         {
             InitializeComponent();
 
-            // Находим колонки
-            var sellColumn = InstrumentsGrid.Columns
-                .OfType<DataGridTemplateColumn>()
-                .FirstOrDefault(c => c.Header?.ToString() == "Продажа");
-            var orderColumn = InstrumentsGrid.Columns
-                .OfType<DataGridTemplateColumn>()
-                .FirstOrDefault(c => c.Header?.ToString() == "Заказ");
-
-            if (sellColumn != null) SellColumn = sellColumn;
-            if (orderColumn != null) OrderColumn = orderColumn;
-
+            // Подключаем обработчик кнопки обновления
             RefreshBtn.Click += RefreshBtn_Click;
-            Loaded += (s, e) =>
-            {
-                UpdateButtonVisibility();
-                LoadInstruments();
-            };
+
+            // При загрузке страницы
+            Loaded += CatalogPage_Loaded;
+        }
+
+        private void CatalogPage_Loaded(object sender, RoutedEventArgs e)
+        {
+            UpdateButtonVisibility();
+            LoadInstruments();
         }
 
         public void SetUserRole(string role)
@@ -61,11 +55,24 @@ namespace MusicStoreCatalog.Pages
 
         private void UpdateButtonVisibility()
         {
-            if (SellColumn != null)
-                SellColumn.Visibility = UserRole == "Консультант" ? Visibility.Visible : Visibility.Collapsed;
-
-            if (OrderColumn != null)
-                OrderColumn.Visibility = UserRole == "Администратор" ? Visibility.Visible : Visibility.Collapsed;
+            if (UserRole == "Консультант")
+            {
+                // Консультант видит обе кнопки
+                SellColumn.Visibility = Visibility.Visible;
+                OrderColumn.Visibility = Visibility.Visible;
+            }
+            else if (UserRole == "Администратор")
+            {
+                // Админ видит только кнопку заказа
+                SellColumn.Visibility = Visibility.Collapsed;
+                OrderColumn.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                // Остальные не видят ничего
+                SellColumn.Visibility = Visibility.Collapsed;
+                OrderColumn.Visibility = Visibility.Collapsed;
+            }
         }
 
         private void LoadInstruments()
@@ -76,6 +83,7 @@ namespace MusicStoreCatalog.Pages
 
                 IQueryable<Instrument> query = context.Instruments;
 
+                // Если пользователь - консультант, фильтруем по специализации
                 if (UserRole == "Консультант" && !string.IsNullOrEmpty(_userSpecialization))
                 {
                     var categories = GetCategoriesForSpecialization(_userSpecialization);
@@ -115,23 +123,41 @@ namespace MusicStoreCatalog.Pages
                 : new List<string>();
         }
 
+        // ===== ОБРАБОТЧИК КНОПКИ ОБНОВЛЕНИЯ =====
         private void RefreshBtn_Click(object sender, RoutedEventArgs e)
         {
             LoadInstruments();
         }
 
+        // ===== ОБРАБОТЧИК КНОПКИ ПРОДАЖИ =====
         private void SellButton_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
             if (button?.Tag != null && int.TryParse(button.Tag.ToString(), out int instrumentId))
             {
+                SellInstrument(instrumentId);
+            }
+        }
+
+        private void SellInstrument(int instrumentId)
+        {
+            try
+            {
                 using var context = new AppDbContext();
                 var instrument = context.Instruments.FirstOrDefault(i => i.Id == instrumentId);
 
-                if (instrument != null && instrument.StockQuantity > 0)
+                if (instrument == null)
                 {
+                    MessageBox.Show("Инструмент не найден", "Ошибка");
+                    return;
+                }
+
+                if (instrument.StockQuantity > 0)
+                {
+                    // Уменьшаем количество
                     instrument.StockQuantity -= 1;
 
+                    // Увеличиваем счетчик продаж консультанта
                     if (_userId > 0)
                     {
                         var consultant = context.Users.OfType<Consultant>().FirstOrDefault(c => c.ID == _userId);
@@ -144,34 +170,131 @@ namespace MusicStoreCatalog.Pages
                     context.SaveChanges();
                     LoadInstruments();
 
-                    MessageBox.Show($"Продажа успешно завершена!\n" +
-                                  $"Осталось: {instrument.StockQuantity} шт.",
+                    MessageBox.Show($"✅ Продажа завершена!\n\n" +
+                                  $"{instrument.Brand} {instrument.Model}\n" +
+                                  $"Осталось в наличии: {instrument.StockQuantity} шт.",
                                   "Успех",
                                   MessageBoxButton.OK,
                                   MessageBoxImage.Information);
                 }
+                else
+                {
+                    MessageBox.Show("❌ Этот инструмент закончился на складе",
+                                  "Ошибка",
+                                  MessageBoxButton.OK,
+                                  MessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при продаже: {ex.Message}", "Ошибка");
             }
         }
 
+        // ===== ОБРАБОТЧИК КНОПКИ ЗАКАЗА =====
         private void OrderButton_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
             if (button?.Tag != null && int.TryParse(button.Tag.ToString(), out int instrumentId))
             {
+                OrderInstrument(instrumentId);
+            }
+        }
+
+        private void OrderInstrument(int instrumentId)
+        {
+            try
+            {
+                // Проверяем, что ID пользователя установлен
+                if (_userId == 0)
+                {
+                    MessageBox.Show("Ошибка: ID пользователя не установлен",
+                                  "Ошибка",
+                                  MessageBoxButton.OK,
+                                  MessageBoxImage.Error);
+                    return;
+                }
+
                 using var context = new AppDbContext();
                 var instrument = context.Instruments.FirstOrDefault(i => i.Id == instrumentId);
 
-                if (instrument != null && _userId > 0)
+                if (instrument == null)
                 {
-                    var orderWindow = new CreateOrderWindow(instrument, _userId);
-                    orderWindow.Owner = Window.GetWindow(this);
-                    orderWindow.ShowDialog();
-
-                    if (orderWindow.DialogResult == true)
-                    {
-                        MessageBox.Show("Заявка создана!", "Успех");
-                    }
+                    MessageBox.Show("Инструмент не найден", "Ошибка");
+                    return;
                 }
+
+                // Получаем текущего пользователя
+                var currentUser = context.Users.FirstOrDefault(u => u.ID == _userId);
+                if (currentUser == null)
+                {
+                    MessageBox.Show("Пользователь не найден", "Ошибка");
+                    return;
+                }
+
+                // Проверяем, есть ли уже активная заявка на этот инструмент от этого пользователя
+                var existingOrder = context.OrderRequests
+                    .FirstOrDefault(o => o.InstrumentId == instrumentId &&
+                                       o.RequestedById == _userId &&
+                                       o.Status == "Pending");
+
+                if (existingOrder != null)
+                {
+                    // Если заявка уже есть - предлагаем увеличить количество
+                    var result = MessageBox.Show(
+                        $"У вас уже есть активная заявка на этот инструмент.\n" +
+                        $"Текущее количество в заявке: {existingOrder.Quantity} шт.\n\n" +
+                        $"Хотите добавить еще 1 шт. к существующей заявке?",
+                        "Обновление заявки",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Question);
+
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        existingOrder.Quantity += 1;
+                        context.SaveChanges();
+
+                        MessageBox.Show($"✅ Заявка обновлена!\n\n" +
+                                      $"Инструмент: {instrument.Brand} {instrument.Model}\n" +
+                                      $"Теперь в заявке: {existingOrder.Quantity} шт.",
+                                      "Успех",
+                                      MessageBoxButton.OK,
+                                      MessageBoxImage.Information);
+                    }
+                    return;
+                }
+
+                // Создаем новую заявку
+                var orderRequest = new OrderRequest
+                {
+                    InstrumentId = instrument.Id,
+                    InstrumentName = $"{instrument.Brand} {instrument.Model}",
+                    Brand = instrument.Brand,
+                    Model = instrument.Model,
+                    Category = instrument.Category,
+                    Quantity = 1,
+                    EstimatedPrice = instrument.Price,
+                    Notes = $"Заказ через каталог. Остаток на складе: {instrument.StockQuantity} шт.",
+                    RequestedById = _userId,
+                    RequestDate = DateTime.Now,
+                    Status = "Pending"
+                };
+
+                context.OrderRequests.Add(orderRequest);
+                context.SaveChanges();
+
+                MessageBox.Show($"✅ Заявка на заказ создана!\n\n" +
+                              $"Инструмент: {instrument.Brand} {instrument.Model}\n" +
+                              $"Количество: 1 шт.\n" +
+                              $"Цена: {instrument.Price:C}\n\n" +
+                              $"Заявка будет рассмотрена администратором.",
+                              "Успех",
+                              MessageBoxButton.OK,
+                              MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при создании заявки: {ex.Message}", "Ошибка");
             }
         }
     }

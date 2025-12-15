@@ -42,8 +42,8 @@
                   RowBackground="White"
                   AlternatingRowBackground="#f8f9fa"
                   HeadersVisibility="Column"
-                  CanUserAddRows="False" 
-            CanUserDeleteRows="False"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
                   IsReadOnly="True">
 
             <DataGrid.Columns>
@@ -53,7 +53,7 @@
                 <DataGridTextColumn Header="Цена" Binding="{Binding Price, StringFormat=C}" Width="90"/>
                 <DataGridTextColumn Header="В наличии" Binding="{Binding StockQuantity}" Width="80"/>
 
-                <!-- Кнопка для продажи (для консультанта) -->
+                <!-- Кнопка для продажи -->
                 <DataGridTemplateColumn x:Name="SellColumn" 
                                         Header="Продажа" 
                                         Width="100">
@@ -61,30 +61,32 @@
                         <DataTemplate>
                             <Button Content="💰 Продать" 
                                     Padding="8,4"
-                                    Tag="{Binding ID}"
-                                    Click="SellButton_Click"
-                                    Background="#2ecc71"
+                                    Tag="{Binding Id}"
+                                    Click="SellButton_Click" 
+                                Background="#2ecc71"
                                     Foreground="White"
-                                    FontWeight="SemiBold"/>
+                                    FontWeight="SemiBold"
+                                    Cursor="Hand"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
 
-                <!-- Кнопка для заказа (для администратора) -->
+                <!-- Кнопка для заказа -->
                 <DataGridTemplateColumn x:Name="OrderColumn" 
                                         Header="Заказ" 
                                         Width="100"
-                                        Visibility="Collapsed">
-                    <!-- По умолчанию скрыта -->
+                                        Visibility="Visible">
+                    <!-- По умолчанию видна -->
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Button Content="📦 Заказать" 
                                     Padding="8,4"
-                                    Tag="{Binding ID}"
-                                    Click="OrderButton_Click"
-                                    Background="#3498db"
+                                    Tag="{Binding Id}"
+                                    Click="OrderButton_Click" 
+                                Background="#3498db"
                                     Foreground="White"
-                                    FontWeight="SemiBold"/>
+                                    FontWeight="SemiBold"
+                                    Cursor="Hand"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>

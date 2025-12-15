@@ -45,7 +45,13 @@ namespace MusicStoreCatalog
             };
 
             AdminUsersBtn.Click += (s, e) => MainFrame.Content = new UsersPage();
-            AdminOrdersBtn.Click += (s, e) => MainFrame.Content = new OrdersPage();
+            AdminOrdersBtn.Click += (s, e) =>
+            {
+                var ordersPage = new OrdersPage();
+                ordersPage.SetCurrentUserId(this.UserId); // Передаем ID текущего пользователя
+                MainFrame.Content = ordersPage;
+            };
+            AdminReportsBtn.Click += (s, e) => MainFrame.Content = new ReportsPage();
             AdminAddInstrumentBtn.Click += (s, e) =>
             {
                 var addWindow = new AddInstrumentWindow();
