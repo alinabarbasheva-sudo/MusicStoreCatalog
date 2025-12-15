@@ -29,8 +29,7 @@
                         Padding="10,6"
                         FontWeight="SemiBold"
                         Background="#3498db"
-                        Foreground="White"
-                        Click="AddUserBtn_Click"/>
+                        Foreground="White"></Button>
             </StackPanel>
         </Border>
 

@@ -14,6 +14,8 @@ namespace MusicStoreCatalog.Pages
         {
             InitializeComponent();
             LoadUsers();
+
+            // Подписываемся на событие Click в конструкторе
             AddUserBtn.Click += AddUserBtn_Click;
         }
 
@@ -22,7 +24,12 @@ namespace MusicStoreCatalog.Pages
             try
             {
                 using var context = new AppDbContext();
-                var consultants = context.Users.OfType<Consultant>().ToList();
+                var consultants = context.Users
+                    .OfType<Consultant>()
+                    .OrderBy(c => c.LastName)
+                    .ThenBy(c => c.FirstName)
+                    .ToList();
+
                 UsersGrid.ItemsSource = consultants;
             }
             catch (Exception ex)
@@ -33,14 +40,22 @@ namespace MusicStoreCatalog.Pages
 
         private void AddUserBtn_Click(object sender, RoutedEventArgs e)
         {
+            // Создаем окно один раз
             var addWindow = new AddConsultantWindow();
-            if (addWindow.ShowDialog() == true)
+            addWindow.Owner = Window.GetWindow(this);
+            addWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+
+            // Подписываемся на событие успешного добавления
+            addWindow.UserAdded += (s, args) =>
             {
+                // Обновляем список при добавлении пользователя
                 LoadUsers();
-            }
+            };
+
+            // Показываем окно модально
+            addWindow.ShowDialog();
         }
 
-        // ===== ДОБАВЛЯЕМ ЭТОТ МЕТОД =====
         public void DeleteUserBtn_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
@@ -49,13 +64,11 @@ namespace MusicStoreCatalog.Pages
                 DeleteConsultant(userId);
             }
         }
-        // =================================
 
         private void DeleteConsultant(int userId)
         {
             try
             {
-                // Подтверждение удаления
                 var result = MessageBox.Show(
                     "Вы уверены, что хотите удалить этого консультанта?\n" +
                     "Все связанные заявки также будут удалены.",
@@ -67,8 +80,6 @@ namespace MusicStoreCatalog.Pages
                     return;
 
                 using var context = new AppDbContext();
-
-                // Находим консультанта
                 var consultant = context.Users.OfType<Consultant>().FirstOrDefault(c => c.ID == userId);
 
                 if (consultant == null)
@@ -83,7 +94,6 @@ namespace MusicStoreCatalog.Pages
                 var orders = context.OrderRequests.Where(o => o.RequestedById == userId).ToList();
                 context.OrderRequests.RemoveRange(orders);
 
-                // Удаляем расписание
 
                 // Удаляем консультанта
                 context.Users.Remove(consultant);
@@ -94,7 +104,7 @@ namespace MusicStoreCatalog.Pages
                               MessageBoxButton.OK,
                               MessageBoxImage.Information);
 
-                LoadUsers(); // Обновляем список
+                LoadUsers();
             }
             catch (Exception ex)
             {

@@ -1,5 +1,6 @@
 ﻿using MusicStoreCatalog.Data;
 using MusicStoreCatalog.Models;
+using System;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
@@ -9,10 +10,14 @@ namespace MusicStoreCatalog.Views
 {
     public partial class AddConsultantWindow : Window
     {
+        // Событие для уведомления о добавлении пользователя
+        public event EventHandler UserAdded;
+
         public AddConsultantWindow()
         {
             InitializeComponent();
             SpecializationCombo.SelectedIndex = 0;
+            LoginBox.Focus();
         }
 
         private void CancelBtn_Click(object sender, RoutedEventArgs e)
@@ -26,39 +31,73 @@ namespace MusicStoreCatalog.Views
             if (string.IsNullOrWhiteSpace(LoginBox.Text) ||
                 string.IsNullOrWhiteSpace(PasswordBox.Password))
             {
-                MessageBox.Show("Заполните логин и пароль");
+                MessageBox.Show("Заполните логин и пароль", "Ошибка",
+                              MessageBoxButton.OK, MessageBoxImage.Warning);
+                LoginBox.Focus();
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(FirstNameBox.Text) ||
+                string.IsNullOrWhiteSpace(LastNameBox.Text))
+            {
+                MessageBox.Show("Заполните имя и фамилию", "Ошибка",
+                              MessageBoxButton.OK, MessageBoxImage.Warning);
+                FirstNameBox.Focus();
                 return;
             }
 
             using var context = new AppDbContext();
 
-            // Проверка что логин не занят
             if (context.Users.Any(u => u.Login == LoginBox.Text))
             {
-                MessageBox.Show("Логин уже занят");
+                MessageBox.Show("Логин уже занят", "Ошибка",
+                              MessageBoxButton.OK, MessageBoxImage.Warning);
+                LoginBox.Focus();
+                LoginBox.SelectAll();
                 return;
             }
 
-            var consultant = new Consultant
+            try
             {
-                Login = LoginBox.Text,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(PasswordBox.Password),
-                FirstName = FirstNameBox.Text,
-                LastName = LastNameBox.Text,
-                PhoneNumber = PhoneBox.Text,
-                Specialization = (SpecializationCombo.SelectedItem as ComboBoxItem)?.Content.ToString(),
-                SalesCount = 0
-            };
+                var consultant = new Consultant
+                {
+                    Login = LoginBox.Text.Trim(),
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(PasswordBox.Password),
+                    FirstName = FirstNameBox.Text.Trim(),
+                    LastName = LastNameBox.Text.Trim(),
+                    PhoneNumber = PhoneBox.Text,
+                    Specialization = (SpecializationCombo.SelectedItem as ComboBoxItem)?.Content.ToString(),
+                    SalesCount = 0
+                };
 
-            context.Users.Add(consultant);
-            context.SaveChanges();
+                context.Users.Add(consultant);
+                context.SaveChanges();
 
-            this.DialogResult = true;
-            this.Close();
+                // Вызываем событие
+                UserAdded?.Invoke(this, EventArgs.Empty);
+
+                // Показываем сообщение
+                MessageBox.Show($"✅ Консультант успешно добавлен!\n\n" +
+                              $"Логин: {consultant.Login}\n" +
+                              $"Имя: {consultant.FirstName} {consultant.LastName}\n" +
+                              $"Специализация: {consultant.Specialization}",
+                              "Успех",
+                              MessageBoxButton.OK,
+                              MessageBoxImage.Information);
+
+                // ЗАКРЫВАЕМ окно (как было раньше)
+                this.DialogResult = true;
+                this.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"❌ Ошибка при сохранении: {ex.Message}", "Ошибка",
+                              MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
+
         private void PhoneBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            // Разрешаем только цифры
             Regex regex = new Regex("[^0-9]+");
             e.Handled = regex.IsMatch(e.Text);
         }
@@ -73,7 +112,7 @@ namespace MusicStoreCatalog.Views
             if (text.Length >= 4)
             {
                 textBox.Text = FormatPhoneNumber(text);
-                textBox.CaretIndex = textBox.Text.Length; // Курсор в конец
+                textBox.CaretIndex = textBox.Text.Length;
             }
         }
 
