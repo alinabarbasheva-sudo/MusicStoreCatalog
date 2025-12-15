@@ -328,11 +328,7 @@ namespace MusicStoreCatalog.Pages
                     Model = order.Model,
                     Category = order.Category,
                     Price = order.EstimatedPrice,
-                    StockQuantity = totalQuantity,
-                    Description = string.IsNullOrEmpty(order.Notes)
-                        ? $"Добавлено по заявке #{originalOrderId}"
-                        : order.Notes,
-                    SerialNumber = $"ORDER-{originalOrderId}"
+                    StockQuantity = totalQuantity
                 };
                 context.Instruments.Add(newInstrument);
 

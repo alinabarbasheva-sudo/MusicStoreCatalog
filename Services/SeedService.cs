@@ -45,12 +45,10 @@ namespace MusicStoreCatalog.Services
     new Instrument {
         Brand = "Yamaha", Model = "F310", Category = "Гитара",
         Price = 15000, StockQuantity = 5,  // цена в br
-        Description = "Акустическая гитара", SerialNumber = "YAM001"
     },
     new Instrument {
         Brand = "Casio", Model = "CT-S100", Category = "Синтезатор",
         Price = 25000, StockQuantity = 3,  // цена в br
-        Description = "Цифровой синтезатор", SerialNumber = "CAS001"
     }
 };
                 context.Instruments.AddRange(instruments);

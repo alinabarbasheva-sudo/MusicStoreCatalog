@@ -14,8 +14,8 @@ namespace MusicStoreCatalog.Views
         public AddInstrumentWindow()
         {
             InitializeComponent();
-            CategoryCombo.SelectedIndex = 0; // Выбираем первую категорию по умолчанию
-            BrandBox.Focus(); // Фокус на первое поле
+            CategoryCombo.SelectedIndex = 0;
+            BrandBox.Focus();
         }
 
         private void CancelBtn_Click(object sender, RoutedEventArgs e)
@@ -37,8 +37,8 @@ namespace MusicStoreCatalog.Views
 
                 // Проверяем, нет ли уже такого инструмента
                 bool exists = context.Instruments.Any(i =>
-                    i.Brand == BrandBox.Text &&
-                    i.Model == ModelBox.Text &&
+                    i.Brand == BrandBox.Text.Trim() &&
+                    i.Model == ModelBox.Text.Trim() &&
                     i.Category == CategoryCombo.Text);
 
                 if (exists)
@@ -50,26 +50,24 @@ namespace MusicStoreCatalog.Views
                     return;
                 }
 
-                // Создаем новый инструмент
+                // Создаем новый инструмент (без описания и серийного номера)
                 var instrument = new Instrument
                 {
                     Brand = BrandBox.Text.Trim(),
                     Model = ModelBox.Text.Trim(),
                     Category = (CategoryCombo.SelectedItem as ComboBoxItem)?.Content.ToString(),
                     Price = decimal.Parse(PriceBox.Text),
-                    StockQuantity = int.Parse(QuantityBox.Text),
-                    Description = DescriptionBox.Text.Trim(),
-                    SerialNumber = SerialBox.Text.Trim()
+                    StockQuantity = int.Parse(QuantityBox.Text)
                 };
 
                 context.Instruments.Add(instrument);
                 context.SaveChanges();
 
-                MessageBox.Show($"Инструмент успешно добавлен!\n\n" +
+                MessageBox.Show($"✅ Инструмент успешно добавлен!\n\n" +
                               $"{instrument.Brand} {instrument.Model}\n" +
                               $"Категория: {instrument.Category}\n" +
                               $"Количество: {instrument.StockQuantity} шт.\n" +
-                              $"Цена: {instrument.Price:C}",
+                              $"Цена: {instrument.Price} br",
                               "Успех",
                               MessageBoxButton.OK,
                               MessageBoxImage.Information);
@@ -79,7 +77,7 @@ namespace MusicStoreCatalog.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при сохранении: {ex.Message}",
+                MessageBox.Show($"❌ Ошибка при сохранении: {ex.Message}",
                               "Ошибка",
                               MessageBoxButton.OK,
                               MessageBoxImage.Error);
@@ -125,20 +123,17 @@ namespace MusicStoreCatalog.Views
             return true;
         }
 
-        // Валидация для чисел
         private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
         {
             Regex regex = new Regex("[^0-9]+");
             e.Handled = regex.IsMatch(e.Text);
         }
 
-        // Валидация для десятичных чисел
         private void DecimalValidationTextBox(object sender, TextCompositionEventArgs e)
         {
             var textBox = sender as TextBox;
             string newText = textBox.Text + e.Text;
 
-            // Разрешаем цифры и одну точку/запятую
             Regex regex = new Regex(@"^[0-9]*[.,]?[0-9]*$");
             e.Handled = !regex.IsMatch(newText);
         }
