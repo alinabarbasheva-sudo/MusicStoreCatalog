@@ -31,45 +31,12 @@ namespace MusicStoreCatalog.Services
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
                     FirstName = "Admin",
                     LastName = "Admin",
-                    PhoneNumber = "00000000000"
+                    PhoneNumber = "-"
                 };
                 context.Users.Add(admin);
                 context.SaveChanges();
             }
 
-            // Создаем инструменты только если их нет
-            if (!context.Instruments.Any())
-            {
-                var instruments = new List<Instrument>
-{
-    new Instrument {
-        Brand = "Yamaha", Model = "F310", Category = "Гитара",
-        Price = 15000, StockQuantity = 5,  // цена в br
-    },
-    new Instrument {
-        Brand = "Casio", Model = "CT-S100", Category = "Синтезатор",
-        Price = 25000, StockQuantity = 3,  // цена в br
-    }
-};
-                context.Instruments.AddRange(instruments);
-                context.SaveChanges();
-            }
-            if (!context.Users.Any(u => u.Login == "consultant"))
-            {
-                var consultant = new Consultant
-                {
-                    Login = "consultant",
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("consultant"),
-                    FirstName = "Тестовый",
-                    LastName = "Консультант",
-                    PhoneNumber = "11111111111",
-                    Specialization = "Гитары",
-                    SalesCount = 0
-                };
-                context.Users.Add(consultant);
-                context.SaveChanges();
-            }
         }
-       
     }
-    }
+}

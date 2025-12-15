@@ -18,15 +18,21 @@ namespace MusicStoreCatalog.Views
             // Проверяем, первый ли запуск
             if (SeedService.IsFirstRun())
             {
+                // Создаем только админа
                 SeedService.CreateFirstAdmin("admin", "admin");
+
+                MessageBox.Show("Система запущена впервые.\n" +
+                              "Создан администратор по умолчанию:\n" +
+                              "Логин: admin\n" +
+                              "Пароль: admin\n\n" +
+                              "Рекомендуется сменить пароль после входа.",
+                              "Первоначальная настройка",
+                              MessageBoxButton.OK,
+                              MessageBoxImage.Information);
             }
 
             // Фокус на поле логина при загрузке
-            Loaded += (s, e) =>
-            {
-                UsernameBox.Focus();
-
-            };
+            Loaded += (s, e) => UsernameBox.Focus();
 
             // Обработка нажатия Enter
             UsernameBox.KeyDown += (s, e) =>
