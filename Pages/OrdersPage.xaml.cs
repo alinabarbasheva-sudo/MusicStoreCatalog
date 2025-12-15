@@ -345,7 +345,7 @@ namespace MusicStoreCatalog.Pages
                     $"{order.Brand} {order.Model}\n" +
                     $"Категория: {order.Category}\n" +
                     $"Количество: {totalQuantity} шт.\n" +
-                    $"Цена: {order.EstimatedPrice:C}",
+                    $"Цена: {order.EstimatedPrice} br",
                     "Новый инструмент",
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);

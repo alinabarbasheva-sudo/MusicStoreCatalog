@@ -50,7 +50,7 @@
                 <DataGridTextColumn Header="Бренд" Binding="{Binding Brand}" Width="120"/>
                 <DataGridTextColumn Header="Модель" Binding="{Binding Model}" Width="120"/>
                 <DataGridTextColumn Header="Категория" Binding="{Binding Category}" Width="100"/>
-                <DataGridTextColumn Header="Цена" Binding="{Binding Price, StringFormat=C}" Width="90"/>
+                <DataGridTextColumn Header="Цена" Binding="{Binding Price, StringFormat={}{0} br}" Width="90"/>
                 <DataGridTextColumn Header="В наличии" Binding="{Binding StockQuantity}" Width="80"/>
 
                 <!-- Кнопка для продажи -->

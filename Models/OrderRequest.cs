@@ -5,7 +5,7 @@ namespace MusicStoreCatalog.Models
     public class OrderRequest
     {
         public int Id { get; set; }
-
+        public string DisplayPrice => $"{EstimatedPrice} br";
         // Если инструмент уже есть в каталоге
         public int? InstrumentId { get; set; }
         public Instrument Instrument { get; set; }

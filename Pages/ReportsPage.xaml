@@ -76,7 +76,7 @@
                                    Foreground="#7f8c8d" 
                                    FontSize="12"/>
                         <TextBlock x:Name="TotalStockValue" 
-                                   Text="0 руб" 
+                                   Text="0 br" 
                                    FontSize="28" 
                                    FontWeight="Bold"
                                    Foreground="#2c3e50"
@@ -295,7 +295,7 @@
                                     </DataGridTextColumn.CellStyle>
                                 </DataGridTextColumn>
                                 <DataGridTextColumn Header="Цена" 
-                                                    Binding="{Binding Price, StringFormat=C}" 
+                                                    Binding="{Binding Price, StringFormat={}{0} br}" 
                                                     Width="100"/>
                                 <DataGridTextColumn Header="На складе" 
                                                     Binding="{Binding StockQuantity}" 

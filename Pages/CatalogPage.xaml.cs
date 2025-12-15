@@ -286,7 +286,7 @@ namespace MusicStoreCatalog.Pages
                 MessageBox.Show($"✅ Заявка на заказ создана!\n\n" +
                               $"Инструмент: {instrument.Brand} {instrument.Model}\n" +
                               $"Количество: 1 шт.\n" +
-                              $"Цена: {instrument.Price:C}\n\n" +
+                              $"Цена: {instrument.Price} br\n\n" + 
                               $"Заявка будет рассмотрена администратором.",
                               "Успех",
                               MessageBoxButton.OK,

@@ -43,7 +43,7 @@
             </ComboBox>
 
             <!-- Цена -->
-            <TextBlock Text="Цена (руб) *" Margin="0,0,0,5"/>
+            <TextBlock Text="Цена (br) *" Margin="0,0,0,5"/>
             <TextBox x:Name="PriceBox" Margin="0,0,0,10" 
                      PreviewTextInput="DecimalValidationTextBox"/>
 

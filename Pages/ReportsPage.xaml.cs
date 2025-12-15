@@ -114,7 +114,7 @@ namespace MusicStoreCatalog.Pages
 
                 if (TotalStockValue != null)
                 {
-                    TotalStockValue.Text = $"{totalStockValue:N0} руб";
+                    TotalStockValue.Text = $"{totalStockValue:N0} br";
                 }
 
                 // 2. Всего инструментов

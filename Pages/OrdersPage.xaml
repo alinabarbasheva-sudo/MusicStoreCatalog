@@ -69,7 +69,7 @@
                             <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="50"/>
                             <DataGridTextColumn Header="Инструмент" Binding="{Binding DisplayName}" Width="180"/>
                             <DataGridTextColumn Header="Кол-во" Binding="{Binding Quantity}" Width="70"/>
-                            <DataGridTextColumn Header="Цена" Binding="{Binding EstimatedPrice, StringFormat=C}" Width="90"/>
+                            <DataGridTextColumn Header="Цена" Binding="{Binding EstimatedPrice, StringFormat={}{0} br}" Width="90"/>
                             <DataGridTextColumn Header="Дата заявки" 
                                                 Binding="{Binding RequestDate, StringFormat=dd.MM.yyyy HH:mm}" 
                                                 Width="130"/>
@@ -160,7 +160,7 @@
                             <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="50"/>
                             <DataGridTextColumn Header="Инструмент" Binding="{Binding DisplayName}" Width="180"/>
                             <DataGridTextColumn Header="Кол-во" Binding="{Binding Quantity}" Width="70"/>
-                            <DataGridTextColumn Header="Цена" Binding="{Binding EstimatedPrice, StringFormat=C}" Width="90"/>
+                            <DataGridTextColumn Header="Цена" Binding="{Binding EstimatedPrice, StringFormat={}{0} br}" Width="90"/>
                             <DataGridTextColumn Header="Дата заявки" 
                                                 Binding="{Binding RequestDate, StringFormat=dd.MM.yyyy}" 
                                                 Width="100"/>
