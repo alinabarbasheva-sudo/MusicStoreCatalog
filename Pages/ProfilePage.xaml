@@ -63,20 +63,16 @@
 
                         <TextBlock Grid.Row="1" Grid.Column="0" Text="Специализация:" FontWeight="SemiBold" Margin="0,0,10,5"/>
                         <TextBlock Grid.Row="1" Grid.Column="1" x:Name="SpecializationText" Margin="0,0,0,5"/>
-
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="График работы:" FontWeight="SemiBold" Margin="0,0,10,5"/>
-                        <TextBlock Grid.Row="2" Grid.Column="1" x:Name="ScheduleText" Margin="0,0,0,5"/>
                     </Grid>
                 </StackPanel>
             </Border>
 
-            <!-- Кнопки -->
-            <!-- Замените кнопки в самом низу ProfilePage.xaml -->
-            <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
-                <Button Content="✏️ Редактировать" Padding="15,8" Background="#3498db" Foreground="White"
-            Click="EditBtn_Click"/>
-                <Button Content="🔒 Сменить пароль" Padding="15,8" Margin="10,0,0,0" 
-            Background="#2ecc71" Foreground="White" Click="ChangePasswordBtn_Click"/>
+            <StackPanel Orientation="Horizontal" Margin="0,20,0,0" x:Name="ButtonsPanel">
+                <Button Content="?? Редактировать" Padding="15,8" Background="#3498db" Foreground="White"
+            Click="EditBtn_Click" x:Name="EditButton"/>
+                <Button Content="?? Сменить пароль" Padding="15,8" Margin="10,0,0,0" 
+            Background="#2ecc71" Foreground="White" Click="ChangePasswordBtn_Click" 
+            x:Name="ChangePasswordButton"/>
             </StackPanel>
         </StackPanel>
     </ScrollViewer>

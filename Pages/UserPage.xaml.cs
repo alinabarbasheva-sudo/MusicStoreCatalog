@@ -84,8 +84,6 @@ namespace MusicStoreCatalog.Pages
                 context.OrderRequests.RemoveRange(orders);
 
                 // Удаляем расписание
-                var schedules = context.Schedules.Where(s => s.UserId == userId).ToList();
-                context.Schedules.RemoveRange(schedules);
 
                 // Удаляем консультанта
                 context.Users.Remove(consultant);

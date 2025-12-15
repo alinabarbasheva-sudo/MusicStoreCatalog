@@ -11,6 +11,7 @@ namespace MusicStoreCatalog.Pages
     public partial class ProfilePage : UserControl
     {
         private string _currentUserLogin;
+        private string _currentUserRole;
 
         public ProfilePage()
         {
@@ -37,18 +38,19 @@ namespace MusicStoreCatalog.Pages
                 {
                     RoleText.Text = "Администратор";
                     SpecializationText.Text = "Не требуется";
+                    _currentUserRole = "Администратор";
                 }
                 else if (user is Consultant consultant)
                 {
                     RoleText.Text = "Консультант";
                     SpecializationText.Text = consultant.Specialization ?? "Не указана";
+                    _currentUserRole = "Консультант";
                 }
 
-                // ВРЕМЕННО - не загружаем график
-                ScheduleText.Text = "График работы";
 
-                // ЗАКОММЕНТИРУЙТЕ эту строку:
-                // LoadSchedule(user.ID);
+
+                // Управляем видимостью кнопок в зависимости от роли
+                UpdateButtonVisibility();
             }
             else
             {
@@ -56,61 +58,32 @@ namespace MusicStoreCatalog.Pages
             }
         }
 
-        private void LoadSchedule(int userId)
+        private void UpdateButtonVisibility()
         {
-            try
+            if (_currentUserRole == "Консультант")
             {
-                using var context = new AppDbContext();
-
-                // Прямой SQL-запрос для проверки таблицы
-                var tableExists = context.Database.ExecuteSqlRaw(
-                    "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='Schedules'");
-
-                if (tableExists == 0)
-                {
-                    ScheduleText.Text = "График не настроен";
-                    return;
-                }
-
-                // Ищем расписание для пользователя
-                var schedule = context.Schedules
-                    .FirstOrDefault(s => s.UserId == userId && s.IsWorking);
-
-                if (schedule != null)
-                {
-                    string day = GetDayOfWeekRussian(schedule.DayOfWeek);
-                    ScheduleText.Text = $"{day}, {schedule.StartTime:hh\\:mm} - {schedule.EndTime:hh\\:mm}";
-                }
-                else
-                {
-                    ScheduleText.Text = "График не установлен";
-                }
+                // Скрываем кнопки для консультанта
+                if (EditButton != null)
+                    EditButton.Visibility = Visibility.Collapsed;
+                if (ChangePasswordButton != null)
+                    ChangePasswordButton.Visibility = Visibility.Collapsed;
             }
-            catch (Exception ex)
+            else
             {
-                // Если ошибка - просто показываем стандартный текст
-                ScheduleText.Text = "График работы";
-                Console.WriteLine($"Информация: таблица Schedules не создана или пуста: {ex.Message}");
+                // Показываем кнопки только для администратора
+                if (EditButton != null)
+                    EditButton.Visibility = Visibility.Visible;
+                if (ChangePasswordButton != null)
+                    ChangePasswordButton.Visibility = Visibility.Visible;
             }
-        }
-
-        private string GetDayOfWeekRussian(DayOfWeek day)
-        {
-            return day switch
-            {
-                DayOfWeek.Monday => "Понедельник",
-                DayOfWeek.Tuesday => "Вторник",
-                DayOfWeek.Wednesday => "Среда",
-                DayOfWeek.Thursday => "Четверг",
-                DayOfWeek.Friday => "Пятница",
-                DayOfWeek.Saturday => "Суббота",
-                DayOfWeek.Sunday => "Воскресенье",
-                _ => "Неизвестно"
-            };
         }
 
         private void EditBtn_Click(object sender, RoutedEventArgs e)
         {
+            // Проверяем, что это администратор
+            if (_currentUserRole != "Администратор")
+                return;
+
             MessageBox.Show("Функция редактирования будет реализована позже",
                            "В разработке",
                            MessageBoxButton.OK,
@@ -119,6 +92,10 @@ namespace MusicStoreCatalog.Pages
 
         private void ChangePasswordBtn_Click(object sender, RoutedEventArgs e)
         {
+            // Проверяем, что это администратор
+            if (_currentUserRole != "Администратор")
+                return;
+
             var changePassWindow = new ChangePasswordWindow(_currentUserLogin);
             changePassWindow.Owner = Window.GetWindow(this);
             changePassWindow.ShowDialog();

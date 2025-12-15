@@ -15,7 +15,6 @@ namespace MusicStoreCatalog.Data
         public DbSet<Consultant> Consultants { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Instrument> Instruments { get; set; }
-        public DbSet<Schedule> Schedules { get; set; }
         public DbSet<OrderRequest> OrderRequests { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -29,12 +28,6 @@ namespace MusicStoreCatalog.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Настройка отношения Schedule -> User
-            modelBuilder.Entity<Schedule>()
-                .HasOne(s => s.User)
-                .WithMany()
-                .HasForeignKey(s => s.UserId)
-                .OnDelete(DeleteBehavior.Restrict); // Или Cascade
 
             // Настройка отношения OrderRequest -> RequestedBy
             modelBuilder.Entity<OrderRequest>()
