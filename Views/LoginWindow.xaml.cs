@@ -31,6 +31,9 @@ namespace MusicStoreCatalog.Views
                               MessageBoxImage.Information);
             }
 
+            // Центрируем окно на экране
+            this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+
             // Фокус на поле логина при загрузке
             Loaded += (s, e) => UsernameBox.Focus();
 

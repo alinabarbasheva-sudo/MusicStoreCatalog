@@ -1,33 +1,25 @@
 ﻿using MusicStoreCatalog.Pages;
-using MusicStoreCatalog.Pages;
 using MusicStoreCatalog.Views;
-using System.Text;
+using System;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace MusicStoreCatalog
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
         public string UserLogin { get; set; }
         public string UserRole { get; set; }
         public int UserId { get; set; }
-        public string UserSpecialization { get; set; } // Добавляем свойство
+        public string UserSpecialization { get; set; }
+
+        private bool _isLoggingOut = false; // Флаг для предотвращения двойного выхода
 
         public MainWindow()
         {
             InitializeComponent();
 
+            // Навигация по меню
             CatalogBtn.Click += (s, e) =>
             {
                 var catalogPage = new CatalogPage();
@@ -45,13 +37,16 @@ namespace MusicStoreCatalog
             };
 
             AdminUsersBtn.Click += (s, e) => MainFrame.Content = new UsersPage();
+
             AdminOrdersBtn.Click += (s, e) =>
             {
                 var ordersPage = new OrdersPage();
-                ordersPage.SetCurrentUserId(this.UserId); // Передаем ID текущего пользователя
+                ordersPage.SetCurrentUserId(this.UserId);
                 MainFrame.Content = ordersPage;
             };
+
             AdminReportsBtn.Click += (s, e) => MainFrame.Content = new ReportsPage();
+
             AdminAddInstrumentBtn.Click += (s, e) =>
             {
                 var addWindow = new AddInstrumentWindow();
@@ -61,12 +56,46 @@ namespace MusicStoreCatalog
                     MessageBox.Show("Инструмент успешно добавлен!", "Успех");
                 }
             };
+
+            // Кнопка выхода - ОДИН обработчик
+            LogoutButton.Click += LogoutButton_Click;
+
             FunWelcomeText();
+        }
+
+        // ===== ОБРАБОТЧИК ВЫХОДА ИЗ АККАУНТА =====
+        private void LogoutButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Отписываемся от события временно
+            LogoutButton.Click -= LogoutButton_Click;
+
+            try
+            {
+                var result = MessageBox.Show(
+                    $"Вы уверены, что хотите выйти из аккаунта?\nПользователь: {UserLogin}",
+                    "Подтверждение выхода",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    // Создаем новое окно входа
+                    var loginWindow = new LoginWindow();
+                    loginWindow.Show();
+
+                    // Закрываем текущее окно
+                    this.Close();
+                }
+            }
+            finally
+            {
+                // Подписываемся обратно
+                LogoutButton.Click += LogoutButton_Click;
+            }
         }
 
         public void FunWelcomeText()
         {
-            // Добавляем специализацию в приветствие для консультанта
             string welcomeText = $"Добро пожаловать, {UserLogin} ({UserRole})";
 
             if (UserRole == "Консультант" && !string.IsNullOrEmpty(UserSpecialization))
@@ -76,7 +105,6 @@ namespace MusicStoreCatalog
 
             WelcomeText.Text = welcomeText;
 
-            //видимость определенных кнопок только для админитратора 
             AdminHeader.Visibility = UserRole == "Администратор" ? Visibility.Visible : Visibility.Collapsed;
             AdminUsersBtn.Visibility = UserRole == "Администратор" ? Visibility.Visible : Visibility.Collapsed;
             AdminAddInstrumentBtn.Visibility = UserRole == "Администратор" ? Visibility.Visible : Visibility.Collapsed;
