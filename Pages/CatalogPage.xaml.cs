@@ -1,4 +1,5 @@
-﻿using MusicStoreCatalog.Data;
+﻿using Microsoft.VisualBasic;
+using MusicStoreCatalog.Data;
 using MusicStoreCatalog.Models;
 using MusicStoreCatalog.Views;
 using System;
@@ -49,7 +50,7 @@ namespace MusicStoreCatalog.Pages
 
             if (UserRole == "Консультант" && !string.IsNullOrEmpty(specialization))
             {
-                TitleText.Text = $"?? Каталог инструментов ({specialization})";
+                TitleText.Text = $"📋 Каталог инструментов ({specialization})";
             }
         }
 
@@ -173,7 +174,7 @@ namespace MusicStoreCatalog.Pages
                     context.SaveChanges();
                     LoadInstruments();
 
-                    MessageBox.Show($"? Продажа завершена!\n\n" +
+                    MessageBox.Show($"✅ Продажа завершена!\n\n" +
                                   $"{instrument.Brand} {instrument.Model}\n" +
                                   $"Осталось в наличии: {instrument.StockQuantity} шт.",
                                   "Успех",
@@ -182,7 +183,7 @@ namespace MusicStoreCatalog.Pages
                 }
                 else
                 {
-                    MessageBox.Show("? Этот инструмент закончился на складе",
+                    MessageBox.Show("⚠️ Этот инструмент закончился на складе",
                                   "Ошибка",
                                   MessageBoxButton.OK,
                                   MessageBoxImage.Warning);
@@ -208,6 +209,7 @@ namespace MusicStoreCatalog.Pages
         {
             try
             {
+                // Проверяем, что ID пользователя установлен
                 if (_userId == 0)
                 {
                     MessageBox.Show("Ошибка: ID пользователя не установлен",
@@ -223,6 +225,34 @@ namespace MusicStoreCatalog.Pages
                 if (instrument == null)
                 {
                     MessageBox.Show("Инструмент не найден", "Ошибка");
+                    return;
+                }
+
+                // Используем InputBox для выбора количества
+                string input = Interaction.InputBox(
+                    $"Введите количество для заказа:\n\n" +
+                    $"Инструмент: {instrument.Brand} {instrument.Model}\n" +
+                    $"Цена: {instrument.Price} br\n" +
+                    $"В наличии: {instrument.StockQuantity} шт.\n\n" +
+                    $"Максимальное количество: {Math.Max(instrument.StockQuantity * 2, 10)} шт.",
+                    "Выбор количества",
+                    "1");
+
+                // Если пользователь нажал Отмена или закрыл окно
+                if (string.IsNullOrEmpty(input)) return;
+
+                // Проверяем введенное количество
+                if (!int.TryParse(input, out int quantity) || quantity <= 0)
+                {
+                    MessageBox.Show("Введите корректное количество (больше 0)", "Ошибка");
+                    return;
+                }
+
+                // Проверяем максимальное количество
+                int maxQuantity = Math.Max(instrument.StockQuantity * 2, 10);
+                if (quantity > maxQuantity)
+                {
+                    MessageBox.Show($"Максимальное количество для заказа: {maxQuantity} шт.", "Ошибка");
                     return;
                 }
 
@@ -246,24 +276,27 @@ namespace MusicStoreCatalog.Pages
                     var result = MessageBox.Show(
                         $"У вас уже есть активная заявка на этот инструмент.\n" +
                         $"Текущее количество в заявке: {existingOrder.Quantity} шт.\n\n" +
-                        $"Хотите добавить еще 1 шт. к существующей заявке?",
+                        $"Хотите добавить {quantity} шт. к существующей заявке?\n" +
+                        $"(Новое количество: {existingOrder.Quantity + quantity} шт.)",
                         "Обновление заявки",
                         MessageBoxButton.YesNo,
                         MessageBoxImage.Question);
 
                     if (result == MessageBoxResult.Yes)
                     {
-                        existingOrder.Quantity += 1;
+                        existingOrder.Quantity += quantity;
+                        existingOrder.EstimatedPrice = instrument.Price * existingOrder.Quantity;
                         context.SaveChanges();
 
-                        MessageBox.Show($"? Заявка обновлена!\n\n" +
+                        MessageBox.Show($"✅ Заявка обновлена!\n\n" +
                                       $"Инструмент: {instrument.Brand} {instrument.Model}\n" +
+                                      $"Добавлено: {quantity} шт.\n" +
                                       $"Теперь в заявке: {existingOrder.Quantity} шт.",
                                       "Успех",
                                       MessageBoxButton.OK,
                                       MessageBoxImage.Information);
+                        return;
                     }
-                    return;
                 }
 
                 // Создаем новую заявку
@@ -274,8 +307,8 @@ namespace MusicStoreCatalog.Pages
                     Brand = instrument.Brand,
                     Model = instrument.Model,
                     Category = instrument.Category,
-                    Quantity = 1,
-                    EstimatedPrice = instrument.Price,
+                    Quantity = quantity,
+                    EstimatedPrice = instrument.Price * quantity,
                     Notes = $"Заказ через каталог. Остаток на складе: {instrument.StockQuantity} шт.",
                     RequestedById = _userId,
                     RequestDate = DateTime.Now,
@@ -285,10 +318,11 @@ namespace MusicStoreCatalog.Pages
                 context.OrderRequests.Add(orderRequest);
                 context.SaveChanges();
 
-                MessageBox.Show($"? Заявка на заказ создана!\n\n" +
+                MessageBox.Show($"✅ Заявка на заказ создана!\n\n" +
                               $"Инструмент: {instrument.Brand} {instrument.Model}\n" +
-                              $"Количество: 1 шт.\n" +
-                              $"Цена: {instrument.Price} br\n\n" +
+                              $"Количество: {quantity} шт.\n" +
+                              $"Общая стоимость: {instrument.Price * quantity} br\n" +
+                              $"Цена за единицу: {instrument.Price} br\n\n" +
                               $"Заявка будет рассмотрена администратором.",
                               "Успех",
                               MessageBoxButton.OK,
@@ -300,7 +334,7 @@ namespace MusicStoreCatalog.Pages
             }
         }
 
-        // ===== НОВЫЙ ОБРАБОТЧИК КНОПКИ УДАЛЕНИЯ =====
+        // ===== ОБРАБОТЧИК КНОПКИ УДАЛЕНИЯ =====
         private void DeleteButton_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;

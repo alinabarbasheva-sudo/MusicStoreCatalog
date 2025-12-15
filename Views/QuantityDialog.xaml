@@ -1,0 +1,92 @@
+﻿<Window x:Class="MusicStoreCatalog.Views.QuantityDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Выбор количества"
+        Height="220"
+        Width="350"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="White">
+
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Информация об инструменте -->
+        <TextBlock Grid.Row="0" 
+                   x:Name="InstrumentInfoText"
+                   FontSize="14"
+                   FontWeight="SemiBold"
+                   TextWrapping="Wrap"
+                   Margin="0,0,0,10"/>
+
+        <!-- Количество на складе -->
+        <TextBlock Grid.Row="1"
+                   x:Name="StockInfoText"
+                   FontSize="12"
+                   Foreground="#666"
+                   Margin="0,0,0,15"/>
+
+        <!-- Выбор количества -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,15">
+            <TextBlock Text="Количество:" 
+                       VerticalAlignment="Center"
+                       FontWeight="SemiBold"
+                       Margin="0,0,10,0"/>
+
+            <TextBox x:Name="QuantityBox" 
+                     Width="60" 
+                     Height="28"
+                     Text="1"
+                     TextAlignment="Center"
+                     VerticalAlignment="Center"
+                     FontSize="13"/>
+
+            <Button Content="-" 
+                    Width="28" 
+                    Height="28"
+                    Margin="10,0,5,0"
+                    FontWeight="Bold"
+                    Click="DecreaseButton_Click"/>
+
+            <Button Content="+" 
+                    Width="28" 
+                    Height="28"
+                    FontWeight="Bold"
+                    Click="IncreaseButton_Click"/>
+        </StackPanel>
+
+        <!-- Сообщение об ошибке -->
+        <TextBlock Grid.Row="3" 
+                   x:Name="ErrorText"
+                   Foreground="Red"
+                   FontSize="11"
+                   Visibility="Collapsed"
+                   TextWrapping="Wrap"
+                   Margin="0,0,0,10"/>
+
+        <!-- Кнопки -->
+        <StackPanel Grid.Row="4" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Right">
+            <Button Content="Отмена" 
+                    Width="80" 
+                    Height="30"
+                    Margin="0,0,10,0"
+                    Click="CancelButton_Click"/>
+
+            <Button Content="Заказать" 
+                    Width="80"
+                    Height="30"
+                    Background="#3498db"
+                    Foreground="White"
+                    FontWeight="SemiBold"
+                    Click="OkButton_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
