@@ -8,7 +8,7 @@
     <ScrollViewer>
         <StackPanel Margin="20" MaxWidth="400">
             <!-- Заголовок -->
-            <TextBlock Text="👤 Мой профиль" FontSize="20" FontWeight="Bold" Margin="0,0,0,20"/>
+            <TextBlock Text="?? Мой профиль" FontSize="20" FontWeight="Bold" Margin="0,0,0,20"/>
 
             <!-- Основная информация -->
             <Border Background="#f8f9fa" Padding="15" CornerRadius="5">
@@ -50,7 +50,6 @@
                     <Grid x:Name="WorkInfoGrid">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
-                            <!-- Строка для специализации будет добавляться/убираться динамически -->
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
@@ -63,24 +62,88 @@
                 </StackPanel>
             </Border>
 
-            <!-- Замените блок с кнопками в ProfilePage.xaml -->
-            <StackPanel Orientation="Horizontal" Margin="0,20,0,0" x:Name="ButtonsPanel">
-                <!-- Кнопка редактирования будет видна только администратору -->
-                <Button Content="✏️ Редактировать" 
-            Padding="15,8" 
-            Background="#3498db" 
-            Foreground="White"
-            x:Name="EditButton"
-            Click="EditButton_Click"
-            Margin="0,0,10,0"/>
+            <!-- Статистика продаж (только для консультантов) -->
+            <Border x:Name="SalesStatsBorder"
+                    Background="#e8f6f3" 
+                    Padding="15" 
+                    CornerRadius="5" 
+                    Margin="0,15,0,0"
+                    Visibility="Collapsed">
+                <StackPanel>
+                    <TextBlock Text="?? Статистика продаж" 
+                               FontWeight="Bold" 
+                               Margin="0,0,0,10"
+                               Foreground="#16a085"/>
 
-                <!-- Кнопка смены пароля будет видна только администратору -->
-                <Button Content="🔒 Сменить пароль" 
-            Padding="15,8" 
-            Background="#2ecc71" 
-            Foreground="White" 
-            x:Name="ChangePasswordButton"
-            Click="ChangePasswordButton_Click"/>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Всего продаж -->
+                        <TextBlock Grid.Row="0" Grid.Column="0" 
+                                   Text="Всего продаж:" 
+                                   FontWeight="SemiBold" 
+                                   Margin="0,0,10,5"/>
+                        <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
+                            <TextBlock x:Name="TotalSalesText" 
+                                       Text="0" 
+                                       FontWeight="Bold"
+                                       Foreground="#27ae60"
+                                       Margin="0,0,5,5"/>
+                            <TextBlock Text="шт." 
+                                       Margin="0,0,0,5"/>
+                        </StackPanel>
+
+                        <!-- Рейтинг звезды -->
+                        <TextBlock Grid.Row="1" Grid.Column="0" 
+                                   Text="Рейтинг:" 
+                                   FontWeight="SemiBold" 
+                                   Margin="0,0,10,5"/>
+                        <StackPanel Grid.Row="1" Grid.Column="1" 
+                                    Orientation="Horizontal"
+                                    x:Name="RatingStarsPanel"
+                                    Margin="0,0,0,5">
+                            <!-- Звезды будут добавляться динамически -->
+                        </StackPanel>
+
+                        <!-- Место среди всех -->
+                        <TextBlock Grid.Row="2" Grid.Column="0" 
+                                   Text="Место среди всех:" 
+                                   FontWeight="SemiBold" 
+                                   Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" 
+                                   x:Name="RankAllText" 
+                                   Text="-" 
+                                   Margin="0,0,0,5"/>
+
+                        <!-- Место по специализации -->
+                        <TextBlock Grid.Row="3" Grid.Column="0" 
+                                   Text="Место по специализации:" 
+                                   FontWeight="SemiBold" 
+                                   Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="3" Grid.Column="1" 
+                                   x:Name="RankSpecializationText" 
+                                   Text="-" 
+                                   Margin="0,0,0,5"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Кнопки -->
+            <StackPanel Orientation="Horizontal" Margin="0,20,0,0" x:Name="ButtonsPanel">
+                <Button Content="?? Редактировать" Padding="15,8" Background="#3498db" Foreground="White"
+                        x:Name="EditButton" Click="EditButton_Click"/>
+                <Button Content="?? Сменить пароль" Padding="15,8" Margin="10,0,0,0" 
+                        Background="#2ecc71" Foreground="White" Click="ChangePasswordButton_Click"
+                        x:Name="ChangePasswordButton"/>
             </StackPanel>
         </StackPanel>
     </ScrollViewer>

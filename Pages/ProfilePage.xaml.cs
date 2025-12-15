@@ -1,9 +1,12 @@
-﻿using MusicStoreCatalog.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using MusicStoreCatalog.Data;
 using MusicStoreCatalog.Models;
 using MusicStoreCatalog.Views;
+using System;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace MusicStoreCatalog.Pages
 {
@@ -12,6 +15,7 @@ namespace MusicStoreCatalog.Pages
         private string _currentUserLogin;
         private string _currentUserRole;
         private int _currentUserId;
+        private Consultant _currentConsultant;
 
         public ProfilePage()
         {
@@ -35,20 +39,27 @@ namespace MusicStoreCatalog.Pages
                 LastNameText.Text = user.LastName;
                 PhoneText.Text = user.PhoneNumber;
 
-                // Определяем роль и настраиваем отображение
+                // Определяем роль
                 if (user is Admin)
                 {
                     RoleText.Text = "Администратор";
                     _currentUserRole = "Администратор";
-                    // У администратора нет специализации
-                    ClearSpecializationRow();
+
+                    // Скрываем статистику для администратора
+                    SalesStatsBorder.Visibility = Visibility.Collapsed;
                 }
                 else if (user is Consultant consultant)
                 {
+                    _currentConsultant = consultant;
                     RoleText.Text = "Консультант";
                     _currentUserRole = "Консультант";
-                    // Добавляем строку специализации для консультанта
+
+                    // Добавляем специализацию
                     AddSpecializationRow(consultant.Specialization ?? "Не указана");
+
+                    // Показываем и загружаем статистику
+                    SalesStatsBorder.Visibility = Visibility.Visible;
+                    LoadSalesStatistics(context, consultant);
                 }
 
                 // Управляем видимостью кнопок
@@ -75,8 +86,7 @@ namespace MusicStoreCatalog.Pages
             {
                 Text = "Специализация:",
                 FontWeight = FontWeights.SemiBold,
-                Margin = new Thickness(0, 0, 10, 5),
-                Name = "SpecializationLabel" // Задаем имя для доступа
+                Margin = new Thickness(0, 0, 10, 5)
             };
             Grid.SetRow(specializationLabel, 1);
             Grid.SetColumn(specializationLabel, 0);
@@ -86,8 +96,7 @@ namespace MusicStoreCatalog.Pages
             var specializationText = new TextBlock
             {
                 Text = specialization,
-                Margin = new Thickness(0, 0, 0, 5),
-                Name = "SpecializationText" // Задаем имя для доступа
+                Margin = new Thickness(0, 0, 0, 5)
             };
             Grid.SetRow(specializationText, 1);
             Grid.SetColumn(specializationText, 1);
@@ -112,6 +121,107 @@ namespace MusicStoreCatalog.Pages
             while (WorkInfoGrid.RowDefinitions.Count > 1)
             {
                 WorkInfoGrid.RowDefinitions.RemoveAt(1);
+            }
+        }
+
+        // ===== НОВЫЙ МЕТОД: Загрузка статистики продаж =====
+        private void LoadSalesStatistics(AppDbContext context, Consultant consultant)
+        {
+            try
+            {
+                // 1. Всего продаж
+                TotalSalesText.Text = consultant.SalesCount.ToString();
+
+                // 2. Расчет рейтинга (звезды)
+                int rating = CalculateRating(consultant.SalesCount);
+                UpdateRatingStars(rating);
+
+                // 3. Место среди всех консультантов
+                var allConsultants = context.Users
+                    .OfType<Consultant>()
+                    .OrderByDescending(c => c.SalesCount)
+                    .ToList();
+
+                int rankAll = allConsultants.FindIndex(c => c.ID == consultant.ID) + 1;
+                int totalConsultants = allConsultants.Count;
+
+                RankAllText.Text = $"{rankAll} из {totalConsultants}";
+
+                // 4. Место среди консультантов своей специализации
+                if (!string.IsNullOrEmpty(consultant.Specialization))
+                {
+                    var sameSpecializationConsultants = allConsultants
+                        .Where(c => c.Specialization == consultant.Specialization)
+                        .OrderByDescending(c => c.SalesCount)
+                        .ToList();
+
+                    if (sameSpecializationConsultants.Any())
+                    {
+                        int rankSpecialization = sameSpecializationConsultants.FindIndex(c => c.ID == consultant.ID) + 1;
+                        int totalInSpecialization = sameSpecializationConsultants.Count;
+
+                        RankSpecializationText.Text = $"{rankSpecialization} из {totalInSpecialization}";
+                    }
+                    else
+                    {
+                        RankSpecializationText.Text = "1 из 1";
+                    }
+                }
+                else
+                {
+                    RankSpecializationText.Text = "Специализация не указана";
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки статистики: {ex.Message}", "Ошибка");
+            }
+        }
+
+        // Расчет рейтинга по количеству продаж
+        private int CalculateRating(int salesCount)
+        {
+            return salesCount switch
+            {
+                >= 50 => 5,
+                >= 40 => 4,
+                >= 30 => 3,
+                >= 20 => 2,
+                >= 10 => 1,
+                _ => 0
+            };
+        }
+
+        // Обновление звезд рейтинга
+        private void UpdateRatingStars(int rating)
+        {
+            // Очищаем панель
+            RatingStarsPanel.Children.Clear();
+
+            // Добавляем золотые звезды за рейтинг
+            for (int i = 0; i < rating; i++)
+            {
+                var star = new TextBlock
+                {
+                    Text = "★",
+                    Foreground = Brushes.Gold,
+                    FontSize = 16,
+                    Margin = new Thickness(0, 0, 2, 0)
+                };
+                RatingStarsPanel.Children.Add(star);
+            }
+
+            // Добавляем серые звезды для недостающих
+            for (int i = rating; i < 5; i++)
+            {
+                var star = new TextBlock
+                {
+                    Text = "☆",
+                    Foreground = Brushes.LightGray,
+                    FontSize = 16,
+                    Margin = new Thickness(0, 0, 2, 0)
+                };
+                RatingStarsPanel.Children.Add(star);
             }
         }
 
