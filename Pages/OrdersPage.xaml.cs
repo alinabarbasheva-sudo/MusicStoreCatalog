@@ -22,9 +22,18 @@ namespace MusicStoreCatalog.Pages
             RefreshProcessedBtn.Click += RefreshProcessedBtn_Click;
             ProcessedFilterCombo.SelectionChanged += ProcessedFilterCombo_SelectionChanged;
 
+            // Устанавливаем начальный выбор
+            ProcessedFilterCombo.SelectedIndex = 0;
+
             // Загружаем данные при открытии
+            Loaded += OrdersPage_Loaded;
+        }
+
+        private void OrdersPage_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Загружаем данные
             LoadPendingOrders();
-            LoadProcessedOrders();
+            LoadProcessedOrders("Все заявки"); // Явно указываем начальный фильтр
             UpdateTabHeaders();
         }
 
@@ -71,20 +80,39 @@ namespace MusicStoreCatalog.Pages
 
         // === ОБРАБОТАННЫЕ ЗАЯВКИ ===
 
-        private void LoadProcessedOrders(string statusFilter = "Все")
+        private void LoadProcessedOrders(string statusFilter = null)
         {
             try
             {
+                Console.WriteLine($"=== Начало загрузки обработанных заявок ===");
+
+                // Если фильтр не передан, берем текущий выбранный
+                if (statusFilter == null)
+                {
+                    statusFilter = GetSelectedProcessedFilter();
+                }
+
+                Console.WriteLine($"Фильтр: {statusFilter}");
+
                 using var context = new AppDbContext();
 
-                // ВАЖНО: Загружаем связанные данные для отображения
+                // Выводим статистику по заявкам
+                var allOrders = context.OrderRequests.ToList();
+                Console.WriteLine($"Всего заявок в базе: {allOrders.Count}");
+                Console.WriteLine($"Pending: {allOrders.Count(o => o.Status == "Pending")}");
+                Console.WriteLine($"Approved: {allOrders.Count(o => o.Status == "Approved")}");
+                Console.WriteLine($"Rejected: {allOrders.Count(o => o.Status == "Rejected")}");
+
+                // Начинаем запрос с базовой фильтрации
                 var query = context.OrderRequests
-                    .Include(o => o.Instrument) // Загружаем инструмент
-                    .Include(o => o.RequestedBy) // Загружаем пользователя
+                    .Include(o => o.Instrument)
+                    .Include(o => o.RequestedBy)
                     .Where(or => or.Status == "Approved" || or.Status == "Rejected");
 
-                // Фильтрация по статусу
-                if (statusFilter != "Все")
+                Console.WriteLine($"Базовый запрос (Approved или Rejected): {query.Count()}");
+
+                // Применяем дополнительную фильтрацию, если выбрано не "Все"
+                if (statusFilter != "Все заявки" && statusFilter != "Все")
                 {
                     string status = statusFilter switch
                     {
@@ -92,21 +120,28 @@ namespace MusicStoreCatalog.Pages
                         "Только отклоненные" => "Rejected",
                         _ => statusFilter
                     };
+                    Console.WriteLine($"Применяем фильтр статуса: {status}");
                     query = query.Where(or => or.Status == status);
+                    Console.WriteLine($"После фильтрации: {query.Count()}");
                 }
 
                 var processedOrders = query
                     .OrderByDescending(or => or.ApprovalDate)
                     .ToList();
 
+                Console.WriteLine($"Загружено заявок для отображения: {processedOrders.Count}");
+
                 ProcessedOrdersGrid.ItemsSource = processedOrders;
 
                 // Обновляем заголовок вкладки
                 UpdateProcessedTabHeader(processedOrders.Count, statusFilter);
+
+                Console.WriteLine($"=== Конец загрузки обработанных заявок ===\n");
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка загрузки обработанных заявок: {ex.Message}", "Ошибка");
+                Console.WriteLine($"Ошибка: {ex.Message}\n{ex.StackTrace}");
             }
         }
 
@@ -118,17 +153,25 @@ namespace MusicStoreCatalog.Pages
 
         private void ProcessedFilterCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            // Загружаем заявки с текущим фильтром
             string filter = GetSelectedProcessedFilter();
             LoadProcessedOrders(filter);
         }
 
         private string GetSelectedProcessedFilter()
         {
+            // Получаем выбранный элемент
             if (ProcessedFilterCombo.SelectedItem is ComboBoxItem selectedItem)
             {
                 return selectedItem.Content.ToString();
             }
-            return "Все";
+            else if (ProcessedFilterCombo.SelectedValue != null)
+            {
+                return ProcessedFilterCombo.SelectedValue.ToString();
+            }
+
+            // Возвращаем значение по умолчанию
+            return "Все заявки";
         }
 
         // === ОБНОВЛЕНИЕ ЗАГОЛОВКОВ ВКЛАДОК ===
@@ -176,10 +219,10 @@ namespace MusicStoreCatalog.Pages
             // Находим вкладку "Обработанные" и обновляем заголовок
             foreach (TabItem tabItem in ((TabControl)((Grid)Content).Children[1]).Items)
             {
-                if (tabItem.Header.ToString().Contains("✅"))
+                if (tabItem.Name == "ProcessedTab" || tabItem.Header.ToString().Contains("Обработанные"))
                 {
-                    string filterText = filter == "Все" ? "" : $" - {filter}";
-                    tabItem.Header = $"✅ Обработанные ({count}){filterText}";
+                    string filterText = filter == "Все заявки" || filter == "Все" ? "" : $" - {filter}";
+                    tabItem.Header = $"📋 Обработанные ({count}){filterText}";
                     break;
                 }
             }
