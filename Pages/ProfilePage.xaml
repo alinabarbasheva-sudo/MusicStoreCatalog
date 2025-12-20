@@ -8,7 +8,7 @@
     <ScrollViewer>
         <StackPanel Margin="20" MaxWidth="400">
             <!-- Заголовок -->
-            <TextBlock Text="?? Мой профиль" FontSize="20" FontWeight="Bold" Margin="0,0,0,20"/>
+            <TextBlock Text=" Мой профиль" FontSize="20" FontWeight="Bold" Margin="0,0,0,20"/>
 
             <!-- Основная информация -->
             <Border Background="#f8f9fa" Padding="15" CornerRadius="5">
@@ -70,7 +70,7 @@
                     Margin="0,15,0,0"
                     Visibility="Collapsed">
                 <StackPanel>
-                    <TextBlock Text="?? Статистика продаж" 
+                    <TextBlock Text="Статистика продаж" 
                                FontWeight="Bold" 
                                Margin="0,0,0,10"
                                Foreground="#16a085"/>
@@ -139,9 +139,9 @@
 
             <!-- Кнопки -->
             <StackPanel Orientation="Horizontal" Margin="0,20,0,0" x:Name="ButtonsPanel">
-                <Button Content="?? Редактировать" Padding="15,8" Background="#3498db" Foreground="White"
+                <Button Content="Редактировать" Padding="15,8" Background="#3498db" Foreground="White"
                         x:Name="EditButton" Click="EditButton_Click"/>
-                <Button Content="?? Сменить пароль" Padding="15,8" Margin="10,0,0,0" 
+                <Button Content="Сменить пароль" Padding="15,8" Margin="10,0,0,0" 
                         Background="#2ecc71" Foreground="White" Click="ChangePasswordButton_Click"
                         x:Name="ChangePasswordButton"/>
             </StackPanel>

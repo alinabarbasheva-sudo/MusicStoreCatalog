@@ -41,7 +41,6 @@
                 <ComboBoxItem Content="Струнные"/>
                 <ComboBoxItem Content="Аксессуары"/>
             </ComboBox>
-
             <!-- Цена -->
             <TextBlock Text="Цена (br) *" Margin="0,0,0,5"/>
             <TextBox x:Name="PriceBox" Margin="0,0,0,10" 
@@ -51,6 +50,13 @@
             <TextBlock Text="Количество на складе *" Margin="0,0,0,5"/>
             <TextBox x:Name="QuantityBox" Text="1" Margin="0,0,0,15"
                      PreviewTextInput="NumberValidationTextBox"/>
+            <!-- В форму добавления инструмента добавьте поле описания -->
+            <TextBlock Text="Описание" Margin="0,0,0,5"/>
+            <TextBox x:Name="DescriptionBox" 
+         Height="60" 
+         TextWrapping="Wrap" 
+         VerticalScrollBarVisibility="Auto"
+         Margin="0,0,0,10"/>
         </StackPanel>
 
         <!-- Кнопки -->

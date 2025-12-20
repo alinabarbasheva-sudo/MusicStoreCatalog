@@ -74,6 +74,20 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="Редактировать" Width="110" IsReadOnly="True">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="✏️ Редактировать" 
+                    Padding="8,4"
+                    Tag="{Binding ID}" 
+                    Click="EditUserBtn_Click"
+                    Background="#3498db"
+                    Foreground="White"
+                    FontWeight="SemiBold"
+                    ToolTip="Редактировать данные консультанта"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                 </DataGrid.Columns>
             </DataGrid>
         </ScrollViewer>

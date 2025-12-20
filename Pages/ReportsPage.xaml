@@ -170,162 +170,126 @@
                 </Border>
             </WrapPanel>
 
-            <!-- Ряд 2: Статистика -->
-            <Grid Margin="0,0,0,20">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+            <!-- Ряд 2: Статистика продаж -->
+            <Border Background="White" 
+                    BorderBrush="#ddd" 
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="20"
+                    Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="📊 ПРОДАЖИ ПО КОНСУЛЬТАНТАМ" 
+                               FontSize="18" 
+                               FontWeight="Bold"
+                               Margin="0,0,0,15"/>
 
-                <!-- Статистика 1: Продажи по консультантам -->
-                <Border Grid.Column="0" 
-                        Background="White" 
-                        BorderBrush="#ddd" 
-                        BorderThickness="1"
-                        CornerRadius="8"
-                        Padding="20"
-                        Margin="0,0,10,0">
-                    <StackPanel>
-                        <TextBlock Text="📊 Лучшие консультанты по продажам" 
-                                   FontSize="16" 
-                                   FontWeight="Bold"
-                                   Margin="0,0,0,15"/>
+                    <ListView x:Name="SalesByConsultantList" 
+                              Height="300"
+                              ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Консультант" Width="180">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding ConsultantName}" 
+                                                       FontWeight="SemiBold"/>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="Специализация" Width="120">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Specialization}"/>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="Продажи" Width="100">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#2ecc71" 
+                                                    CornerRadius="4" 
+                                                    Padding="6,2"
+                                                    HorizontalAlignment="Left">
+                                                <TextBlock Text="{Binding SalesCount}" 
+                                                           Foreground="White"
+                                                           FontWeight="Bold"
+                                                           HorizontalAlignment="Center"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="Рейтинг" Width="120">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="★" 
+                                                           Foreground="#f39c12"
+                                                           FontSize="14"
+                                                           Visibility="{Binding Rating, Converter={StaticResource RatingConverter}, ConverterParameter=1}"/>
+                                                <TextBlock Text="★" 
+                                                           Foreground="#f39c12"
+                                                           FontSize="14"
+                                                           Visibility="{Binding Rating, Converter={StaticResource RatingConverter}, ConverterParameter=2}"/>
+                                                <TextBlock Text="★" 
+                                                           Foreground="#f39c12"
+                                                           FontSize="14"
+                                                           Visibility="{Binding Rating, Converter={StaticResource RatingConverter}, ConverterParameter=3}"/>
+                                                <TextBlock Text="★" 
+                                                           Foreground="#f39c12"
+                                                           FontSize="14"
+                                                           Visibility="{Binding Rating, Converter={StaticResource RatingConverter}, ConverterParameter=4}"/>
+                                                <TextBlock Text="★" 
+                                                           Foreground="#f39c12"
+                                                           FontSize="14"
+                                                           Visibility="{Binding Rating, Converter={StaticResource RatingConverter}, ConverterParameter=5}"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="Эффективность" Width="150">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <ProgressBar Value="{Binding SalesCount}" 
+                                                         Maximum="50" 
+                                                         Height="10"
+                                                         Width="120"
+                                                         Margin="5,0,0,0">
+                                                <ProgressBar.Style>
+                                                    <Style TargetType="ProgressBar">
+                                                        <Setter Property="Foreground" Value="#2ecc71"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding SalesCount}" Value="50">
+                                                                <Setter Property="Foreground" Value="#27ae60"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding SalesCount}" Value="40">
+                                                                <Setter Property="Foreground" Value="#2ecc71"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding SalesCount}" Value="30">
+                                                                <Setter Property="Foreground" Value="#f39c12"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding SalesCount}" Value="20">
+                                                                <Setter Property="Foreground" Value="#e67e22"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding SalesCount}" Value="10">
+                                                                <Setter Property="Foreground" Value="#e74c3c"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </ProgressBar.Style>
+                                            </ProgressBar>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
 
-                        <ListView x:Name="SalesByConsultantList" 
-                                  Height="250"
-                                  ScrollViewer.VerticalScrollBarVisibility="Auto">
-                            <ListView.View>
-                                <GridView>
-                                    <GridViewColumn Header="Консультант" Width="150">
-                                        <GridViewColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding ConsultantName}" 
-                                                           FontWeight="SemiBold"/>
-                                            </DataTemplate>
-                                        </GridViewColumn.CellTemplate>
-                                    </GridViewColumn>
-                                    <GridViewColumn Header="Специализация" Width="100">
-                                        <GridViewColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding Specialization}"/>
-                                            </DataTemplate>
-                                        </GridViewColumn.CellTemplate>
-                                    </GridViewColumn>
-                                    <GridViewColumn Header="Продажи" Width="80">
-                                        <GridViewColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <Border Background="#2ecc71" 
-                                                        CornerRadius="4" 
-                                                        Padding="6,2"
-                                                        HorizontalAlignment="Left">
-                                                    <TextBlock Text="{Binding SalesCount}" 
-                                                               Foreground="White"
-                                                               FontWeight="Bold"
-                                                               HorizontalAlignment="Center"/>
-                                                </Border>
-                                            </DataTemplate>
-                                        </GridViewColumn.CellTemplate>
-                                    </GridViewColumn>
-                                    <GridViewColumn Header="Рейтинг" Width="100">
-                                        <GridViewColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="★" 
-                                                               Foreground="#f39c12"
-                                                               FontSize="14"
-                                                               Visibility="{Binding Rating, Converter={StaticResource RatingConverter}, ConverterParameter=1}"/>
-                                                    <TextBlock Text="★" 
-                                                               Foreground="#f39c12"
-                                                               FontSize="14"
-                                                               Visibility="{Binding Rating, Converter={StaticResource RatingConverter}, ConverterParameter=2}"/>
-                                                    <TextBlock Text="★" 
-                                                               Foreground="#f39c12"
-                                                               FontSize="14"
-                                                               Visibility="{Binding Rating, Converter={StaticResource RatingConverter}, ConverterParameter=3}"/>
-                                                    <TextBlock Text="★" 
-                                                               Foreground="#f39c12"
-                                                               FontSize="14"
-                                                               Visibility="{Binding Rating, Converter={StaticResource RatingConverter}, ConverterParameter=4}"/>
-                                                    <TextBlock Text="★" 
-                                                               Foreground="#f39c12"
-                                                               FontSize="14"
-                                                               Visibility="{Binding Rating, Converter={StaticResource RatingConverter}, ConverterParameter=5}"/>
-                                                </StackPanel>
-                                            </DataTemplate>
-                                        </GridViewColumn.CellTemplate>
-                                    </GridViewColumn>
-                                </GridView>
-                            </ListView.View>
-                        </ListView>
-                    </StackPanel>
-                </Border>
-
-                <!-- Статистика 2: Топ инструментов -->
-                <Border Grid.Column="1" 
-                        Background="White" 
-                        BorderBrush="#ddd" 
-                        BorderThickness="1"
-                        CornerRadius="8"
-                        Padding="20">
-                    <StackPanel>
-                        <TextBlock Text="🏆 Топ-10 инструментов на складе" 
-                                   FontSize="16" 
-                                   FontWeight="Bold"
-                                   Margin="0,0,0,15"/>
-
-                        <DataGrid x:Name="TopInstrumentsGrid" 
-                                  AutoGenerateColumns="False"
-                                  Height="250"
-                                  IsReadOnly="True"
-                                  HeadersVisibility="Column"
-                                  GridLinesVisibility="None"
-                                  RowBackground="White"
-                                  AlternatingRowBackground="#f8f9fa">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Инструмент" 
-                                                    Binding="{Binding DisplayName}" 
-                                                    Width="180"/>
-                                <DataGridTextColumn Header="Категория" 
-                                                    Binding="{Binding Category}" 
-                                                    Width="100">
-                                    <DataGridTextColumn.CellStyle>
-                                        <Style TargetType="DataGridCell">
-                                            <Setter Property="HorizontalAlignment" Value="Center"/>
-                                        </Style>
-                                    </DataGridTextColumn.CellStyle>
-                                </DataGridTextColumn>
-                                <DataGridTextColumn Header="Цена" 
-                                                    Binding="{Binding Price, StringFormat={}{0} br}" 
-                                                    Width="100"/>
-                                <DataGridTextColumn Header="На складе" 
-                                                    Binding="{Binding StockQuantity}" 
-                                                    Width="80">
-                                    <DataGridTextColumn.CellStyle>
-                                        <Style TargetType="DataGridCell">
-                                            <Setter Property="HorizontalAlignment" Value="Center"/>
-                                            <Setter Property="FontWeight" Value="SemiBold"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding StockQuantity}" Value="0">
-                                                    <Setter Property="Foreground" Value="#e74c3c"/>
-                                                    <Setter Property="ToolTip" Value="Нет в наличии"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding StockQuantity}" Value="1">
-                                                    <Setter Property="Foreground" Value="#e67e22"/>
-                                                    <Setter Property="ToolTip" Value="Остался 1 шт."/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding StockQuantity}" Value="2">
-                                                    <Setter Property="Foreground" Value="#f39c12"/>
-                                                    <Setter Property="ToolTip" Value="Осталось 2 шт."/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </DataGridTextColumn.CellStyle>
-                                </DataGridTextColumn>
-                            </DataGrid.Columns>
-                        </DataGrid>
-                    </StackPanel>
-                </Border>
-            </Grid>
+                    <TextBlock Text="Рейтинг: ★ (0-9) ★★ (10-19) ★★★ (20-29) ★★★★ (30-39) ★★★★★ (40+)" 
+                               FontSize="11" 
+                               Foreground="#95a5a6"
+                               Margin="0,10,0,0"/>
+                </StackPanel>
+            </Border>
 
             <!-- Ряд 3: Статистика по заявкам -->
             <Border Background="White" 
@@ -382,9 +346,9 @@
                                 <TextBlock x:Name="ApprovedCount" 
                                            Text="0" 
                                            FontSize="36" 
-                                           FontWeight="Bold"
-                                           Foreground="#27ae60"
-                                           Margin="0,5,0,0"/>
+                                   FontWeight="Bold"
+                                   Foreground="#27ae60"
+                                   Margin="0,5,0,0"/>
                                 <TextBlock x:Name="ApprovedQuantity" 
                                            Text="0 шт. инструментов" 
                                            FontSize="12" 

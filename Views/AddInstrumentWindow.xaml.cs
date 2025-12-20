@@ -1,6 +1,7 @@
 ﻿using MusicStoreCatalog.Data;
 using MusicStoreCatalog.Models;
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -35,11 +36,20 @@ namespace MusicStoreCatalog.Views
             {
                 using var context = new AppDbContext();
 
+                // Получаем выбранную категорию правильно
+                string selectedCategory = GetSelectedCategory();
+                if (string.IsNullOrEmpty(selectedCategory))
+                {
+                    MessageBox.Show("Выберите категорию инструмента", "Ошибка");
+                    CategoryCombo.Focus();
+                    return;
+                }
+
                 // Проверяем, нет ли уже такого инструмента
                 bool exists = context.Instruments.Any(i =>
                     i.Brand == BrandBox.Text.Trim() &&
                     i.Model == ModelBox.Text.Trim() &&
-                    i.Category == CategoryCombo.Text);
+                    i.Category == selectedCategory);
 
                 if (exists)
                 {
@@ -50,13 +60,23 @@ namespace MusicStoreCatalog.Views
                     return;
                 }
 
-                // Создаем новый инструмент (без описания и серийного номера)
+                // Парсим цену с учетом культуры (запятая/точка)
+                decimal price;
+                if (!decimal.TryParse(PriceBox.Text.Replace(",", "."), NumberStyles.Any, CultureInfo.InvariantCulture, out price))
+                {
+                    MessageBox.Show("Введите корректную цену", "Ошибка");
+                    PriceBox.Focus();
+                    PriceBox.SelectAll();
+                    return;
+                }
+
+                // Создаем новый инструмент
                 var instrument = new Instrument
                 {
                     Brand = BrandBox.Text.Trim(),
                     Model = ModelBox.Text.Trim(),
-                    Category = (CategoryCombo.SelectedItem as ComboBoxItem)?.Content.ToString(),
-                    Price = decimal.Parse(PriceBox.Text),
+                    Category = selectedCategory,
+                    Price = price,
                     StockQuantity = int.Parse(QuantityBox.Text)
                 };
 
@@ -77,11 +97,31 @@ namespace MusicStoreCatalog.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"❌ Ошибка при сохранении: {ex.Message}",
+                MessageBox.Show($"❌ Ошибка при сохранении: {ex.Message}\n\n" +
+                              $"Подробности: {ex.InnerException?.Message}",
                               "Ошибка",
                               MessageBoxButton.OK,
                               MessageBoxImage.Error);
             }
+        }
+
+        // Метод для получения выбранной категории
+        private string GetSelectedCategory()
+        {
+            if (CategoryCombo.SelectedItem is ComboBoxItem selectedItem)
+            {
+                return selectedItem.Content?.ToString();
+            }
+            else if (CategoryCombo.SelectedValue != null)
+            {
+                return CategoryCombo.SelectedValue.ToString();
+            }
+            else if (!string.IsNullOrEmpty(CategoryCombo.Text))
+            {
+                return CategoryCombo.Text;
+            }
+
+            return null;
         }
 
         private bool ValidateInput()
@@ -102,16 +142,40 @@ namespace MusicStoreCatalog.Views
                 return false;
             }
 
-            // Проверка цены
-            if (!decimal.TryParse(PriceBox.Text, out decimal price) || price <= 0)
+            // Проверка категории
+            string category = GetSelectedCategory();
+            if (string.IsNullOrEmpty(category))
             {
-                MessageBox.Show("Введите корректную цену (больше 0)", "Ошибка");
+                MessageBox.Show("Выберите категорию инструмента", "Ошибка");
+                CategoryCombo.Focus();
+                return false;
+            }
+
+            // Проверка цены
+            if (string.IsNullOrWhiteSpace(PriceBox.Text))
+            {
+                MessageBox.Show("Введите цену инструмента", "Ошибка");
+                PriceBox.Focus();
+                return false;
+            }
+
+            // Пробуем распарсить цену
+            if (!decimal.TryParse(PriceBox.Text.Replace(",", "."), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal price) || price <= 0)
+            {
+                MessageBox.Show("Введите корректную цену (больше 0)\nПример: 15000 или 15000.50", "Ошибка");
                 PriceBox.Focus();
                 PriceBox.SelectAll();
                 return false;
             }
 
             // Проверка количества
+            if (string.IsNullOrWhiteSpace(QuantityBox.Text))
+            {
+                MessageBox.Show("Введите количество инструментов", "Ошибка");
+                QuantityBox.Focus();
+                return false;
+            }
+
             if (!int.TryParse(QuantityBox.Text, out int quantity) || quantity < 0)
             {
                 MessageBox.Show("Введите корректное количество (0 или больше)", "Ошибка");
@@ -125,6 +189,7 @@ namespace MusicStoreCatalog.Views
 
         private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
         {
+            // Разрешаем только цифры
             Regex regex = new Regex("[^0-9]+");
             e.Handled = regex.IsMatch(e.Text);
         }
@@ -134,8 +199,20 @@ namespace MusicStoreCatalog.Views
             var textBox = sender as TextBox;
             string newText = textBox.Text + e.Text;
 
-            Regex regex = new Regex(@"^[0-9]*[.,]?[0-9]*$");
+            // Разрешаем цифры, одну точку или запятую
+            Regex regex = new Regex(@"^[0-9]*[,.]?[0-9]*$");
             e.Handled = !regex.IsMatch(newText);
+        }
+
+        // Обработчик изменения текста в поле цены
+        private void PriceBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            // Автоматически заменяем запятую на точку
+            if (PriceBox.Text.Contains(","))
+            {
+                PriceBox.Text = PriceBox.Text.Replace(",", ".");
+                PriceBox.CaretIndex = PriceBox.Text.Length;
+            }
         }
     }
 }

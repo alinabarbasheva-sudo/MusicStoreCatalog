@@ -19,27 +19,12 @@ namespace MusicStoreCatalog.Pages
             public int SalesCount { get; set; }
             public int Rating => SalesCount switch
             {
-                >= 50 => 5,
-                >= 40 => 4,
-                >= 30 => 3,
-                >= 20 => 2,
-                >= 10 => 1,
+                >= 40 => 5,
+                >= 30 => 4,
+                >= 20 => 3,
+                >= 10 => 2,
+                >= 5 => 1,
                 _ => 0
-            };
-        }
-
-        public class TopInstrument
-        {
-            public string DisplayName { get; set; }
-            public string Category { get; set; }
-            public decimal Price { get; set; }
-            public int StockQuantity { get; set; }
-            public string StockStatus => StockQuantity switch
-            {
-                0 => "Нет в наличии",
-                1 => "1 шт.",
-                2 => "2 шт.",
-                _ => $"{StockQuantity} шт."
             };
         }
 
@@ -86,10 +71,7 @@ namespace MusicStoreCatalog.Pages
                 // 2. Загружаем продажи по консультантам
                 LoadSalesByConsultant(context);
 
-                // 3. Загружаем топ инструментов
-                LoadTopInstruments(context);
-
-                // 4. Загружаем статистику заявок
+                // 3. Загружаем статистику заявок
                 LoadOrderStatistics(context);
             }
             catch (Exception ex)
@@ -234,47 +216,6 @@ namespace MusicStoreCatalog.Pages
                 if (SalesByConsultantList != null)
                 {
                     SalesByConsultantList.ItemsSource = new List<SalesByConsultant>();
-                }
-            }
-        }
-
-        private void LoadTopInstruments(AppDbContext context)
-        {
-            try
-            {
-                if (TopInstrumentsGrid == null) return;
-
-                var instruments = context.Instruments;
-
-                if (instruments == null || !instruments.Any())
-                {
-                    TopInstrumentsGrid.ItemsSource = new List<TopInstrument>();
-                    return;
-                }
-
-                // Сортируем по количеству на складе (самые низкие остатки сверху)
-                var topInstruments = instruments
-                    .Where(i => i != null && !string.IsNullOrEmpty(i.Brand))
-                    .OrderBy(i => i.StockQuantity) // Меньше всего на складе - сверху
-                    .ThenByDescending(i => i.Price) // Дорогие сверху
-                    .Take(10)
-                    .Select(i => new TopInstrument
-                    {
-                        DisplayName = $"{i.Brand} {i.Model}",
-                        Category = i.Category ?? "Не указана",
-                        Price = i.Price,
-                        StockQuantity = i.StockQuantity
-                    })
-                    .ToList();
-
-                TopInstrumentsGrid.ItemsSource = topInstruments;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Ошибка загрузки топ инструментов: {ex.Message}");
-                if (TopInstrumentsGrid != null)
-                {
-                    TopInstrumentsGrid.ItemsSource = new List<TopInstrument>();
                 }
             }
         }

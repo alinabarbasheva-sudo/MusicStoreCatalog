@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace MusicStoreCatalog.Pages
 {
@@ -15,16 +16,33 @@ namespace MusicStoreCatalog.Pages
         public string UserRole { get; set; }
         private int _userId;
         private string _userSpecialization;
+        private List<Instrument> _allInstruments = new List<Instrument>();
+        private string _currentSearchText = string.Empty;
+        private SearchFilters _currentFilters = new SearchFilters();
 
         public CatalogPage()
         {
             InitializeComponent();
 
-            // Подключаем обработчик кнопки обновления
+            // Подключаем обработчики
             RefreshBtn.Click += RefreshBtn_Click;
+            SearchTextBox.TextChanged += SearchTextBox_TextChanged;
 
             // При загрузке страницы
             Loaded += CatalogPage_Loaded;
+        }
+
+        // Класс для хранения фильтров поиска
+        private class SearchFilters
+        {
+            public string Brand { get; set; } = string.Empty;
+            public string Model { get; set; } = string.Empty;
+            public string Category { get; set; } = string.Empty;
+            public decimal? MinPrice { get; set; }
+            public decimal? MaxPrice { get; set; }
+            public int? MinStock { get; set; }
+            public int? MaxStock { get; set; }
+            public bool InStockOnly { get; set; } = false;
         }
 
         private void CatalogPage_Loaded(object sender, RoutedEventArgs e)
@@ -97,13 +115,14 @@ namespace MusicStoreCatalog.Pages
                     }
                 }
 
-                var instruments = query
+                _allInstruments = query
                     .OrderBy(i => i.Category)
                     .ThenBy(i => i.Brand)
                     .ThenBy(i => i.Model)
                     .ToList();
 
-                InstrumentsGrid.ItemsSource = instruments;
+                // Применяем текущий поиск и фильтры
+                ApplySearchAndFilters();
             }
             catch (Exception ex)
             {
@@ -127,11 +146,313 @@ namespace MusicStoreCatalog.Pages
                 : new List<string>();
         }
 
+        // ===== ПОИСК И ФИЛЬТРАЦИЯ =====
+        private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            _currentSearchText = SearchTextBox.Text.Trim();
+            ApplySearchAndFilters();
+        }
+
+        private void ClearSearchBtn_Click(object sender, RoutedEventArgs e)
+        {
+            SearchTextBox.Text = string.Empty;
+            _currentFilters = new SearchFilters();
+            ApplySearchAndFilters();
+        }
+
+        private void AdvancedSearchBtn_Click(object sender, RoutedEventArgs e)
+        {
+            ShowAdvancedSearchDialog();
+        }
+
+        private void ApplySearchAndFilters()
+        {
+            if (!_allInstruments.Any())
+            {
+                InstrumentsGrid.ItemsSource = null;
+                return;
+            }
+
+            var filteredInstruments = _allInstruments.AsEnumerable();
+
+            // Применяем текстовый поиск
+            if (!string.IsNullOrEmpty(_currentSearchText))
+            {
+                filteredInstruments = filteredInstruments.Where(i =>
+                    (i.Brand != null && i.Brand.Contains(_currentSearchText, StringComparison.OrdinalIgnoreCase)) ||
+                    (i.Model != null && i.Model.Contains(_currentSearchText, StringComparison.OrdinalIgnoreCase)) ||
+                    (i.Category != null && i.Category.Contains(_currentSearchText, StringComparison.OrdinalIgnoreCase)));
+            }
+
+            // Применяем фильтры из расширенного поиска
+            if (!string.IsNullOrEmpty(_currentFilters.Brand))
+            {
+                filteredInstruments = filteredInstruments.Where(i =>
+                    i.Brand != null && i.Brand.Equals(_currentFilters.Brand, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrEmpty(_currentFilters.Model))
+            {
+                filteredInstruments = filteredInstruments.Where(i =>
+                    i.Model != null && i.Model.Contains(_currentFilters.Model, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrEmpty(_currentFilters.Category))
+            {
+                filteredInstruments = filteredInstruments.Where(i =>
+                    i.Category != null && i.Category.Equals(_currentFilters.Category, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (_currentFilters.MinPrice.HasValue)
+            {
+                filteredInstruments = filteredInstruments.Where(i => i.Price >= _currentFilters.MinPrice.Value);
+            }
+
+            if (_currentFilters.MaxPrice.HasValue)
+            {
+                filteredInstruments = filteredInstruments.Where(i => i.Price <= _currentFilters.MaxPrice.Value);
+            }
+
+            if (_currentFilters.MinStock.HasValue)
+            {
+                filteredInstruments = filteredInstruments.Where(i => i.StockQuantity >= _currentFilters.MinStock.Value);
+            }
+
+            if (_currentFilters.MaxStock.HasValue)
+            {
+                filteredInstruments = filteredInstruments.Where(i => i.StockQuantity <= _currentFilters.MaxStock.Value);
+            }
+
+            if (_currentFilters.InStockOnly)
+            {
+                filteredInstruments = filteredInstruments.Where(i => i.StockQuantity > 0);
+            }
+
+            // Обновляем DataGrid
+            InstrumentsGrid.ItemsSource = filteredInstruments
+                .OrderBy(i => i.Category)
+                .ThenBy(i => i.Brand)
+                .ThenBy(i => i.Model)
+                .ToList();
+
+            // Показываем количество найденных инструментов
+            UpdateResultsCount(filteredInstruments.Count());
+        }
+
+        private void UpdateResultsCount(int count)
+        {
+            var totalCount = _allInstruments.Count;
+            var title = TitleText.Text;
+
+            // Убираем предыдущий счетчик, если он есть
+            var idx = title.IndexOf("(");
+            if (idx > 0)
+            {
+                title = title.Substring(0, idx).Trim();
+            }
+
+            if (count != totalCount || !string.IsNullOrEmpty(_currentSearchText))
+            {
+                TitleText.Text = $"{title} (Найдено: {count} из {totalCount})";
+            }
+            else
+            {
+                TitleText.Text = title;
+            }
+        }
+
+        private void ShowAdvancedSearchDialog()
+        {
+            try
+            {
+                using var context = new AppDbContext();
+
+                // Получаем уникальные бренды и категории для выпадающих списков
+                var brands = context.Instruments
+                    .Select(i => i.Brand)
+                    .Distinct()
+                    .OrderBy(b => b)
+                    .ToList();
+
+                var categories = context.Instruments
+                    .Select(i => i.Category)
+                    .Distinct()
+                    .OrderBy(c => c)
+                    .ToList();
+
+                // Получаем минимальную и максимальную цену
+                var minPrice = context.Instruments.Min(i => i.Price);
+                var maxPrice = context.Instruments.Max(i => i.Price);
+
+                var minStock = context.Instruments.Min(i => i.StockQuantity);
+                var maxStock = context.Instruments.Max(i => i.StockQuantity);
+
+                // Создаем окно расширенного поиска
+                var dialog = new Window
+                {
+                    Title = "⚙️ Расширенный поиск",
+                    Width = 400,
+                    Height = 500,
+                    WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                    ResizeMode = ResizeMode.NoResize
+                };
+
+                var stackPanel = new StackPanel { Margin = new Thickness(20) };
+
+                // Бренд
+                var brandLabel = new Label { Content = "Бренд:", FontWeight = FontWeights.Bold };
+                var brandComboBox = new ComboBox
+                {
+                    ItemsSource = new List<string> { "" }.Concat(brands),
+                    SelectedItem = _currentFilters.Brand
+                };
+
+                // Модель
+                var modelLabel = new Label { Content = "Модель:", FontWeight = FontWeights.Bold, Margin = new Thickness(0, 10, 0, 0) };
+                var modelTextBox = new TextBox { Text = _currentFilters.Model };
+
+                // Категория
+                var categoryLabel = new Label { Content = "Категория:", FontWeight = FontWeights.Bold, Margin = new Thickness(0, 10, 0, 0) };
+                var categoryComboBox = new ComboBox
+                {
+                    ItemsSource = new List<string> { "" }.Concat(categories),
+                    SelectedItem = _currentFilters.Category
+                };
+
+                // Цена
+                var priceLabel = new Label { Content = $"Цена (от {minPrice} до {maxPrice} br):", FontWeight = FontWeights.Bold, Margin = new Thickness(0, 10, 0, 0) };
+                var priceStack = new StackPanel { Orientation = Orientation.Horizontal };
+                var minPriceTextBox = new TextBox { Width = 100, Text = _currentFilters.MinPrice?.ToString() ?? "", ToolTip = "Минимальная цена" };
+                var priceSeparator = new Label { Content = " - ", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(5, 0, 5, 0) };
+                var maxPriceTextBox = new TextBox { Width = 100, Text = _currentFilters.MaxPrice?.ToString() ?? "", ToolTip = "Максимальная цена" };
+
+                priceStack.Children.Add(minPriceTextBox);
+                priceStack.Children.Add(priceSeparator);
+                priceStack.Children.Add(maxPriceTextBox);
+
+                // Количество на складе
+                var stockLabel = new Label { Content = $"Количество (от {minStock} до {maxStock}):", FontWeight = FontWeights.Bold, Margin = new Thickness(0, 10, 0, 0) };
+                var stockStack = new StackPanel { Orientation = Orientation.Horizontal };
+                var minStockTextBox = new TextBox { Width = 100, Text = _currentFilters.MinStock?.ToString() ?? "", ToolTip = "Минимальное количество" };
+                var stockSeparator = new Label { Content = " - ", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(5, 0, 5, 0) };
+                var maxStockTextBox = new TextBox { Width = 100, Text = _currentFilters.MaxStock?.ToString() ?? "", ToolTip = "Максимальное количество" };
+
+                stockStack.Children.Add(minStockTextBox);
+                stockStack.Children.Add(stockSeparator);
+                stockStack.Children.Add(maxStockTextBox);
+
+                // Только в наличии
+                var inStockCheckBox = new CheckBox
+                {
+                    Content = "Только инструменты в наличии",
+                    IsChecked = _currentFilters.InStockOnly,
+                    Margin = new Thickness(0, 10, 0, 0)
+                };
+
+                // Кнопки
+                var buttonStack = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 20, 0, 0) };
+
+                var searchButton = new Button
+                {
+                    Content = "🔍 Поиск",
+                    Width = 100,
+                    Height = 30,
+                    Margin = new Thickness(0, 0, 10, 0),
+                    Background = Brushes.DodgerBlue,
+                    Foreground = Brushes.White,
+                    FontWeight = FontWeights.Bold
+                };
+
+                var clearButton = new Button
+                {
+                    Content = "❌ Очистить",
+                    Width = 100,
+                    Height = 30,
+                    Margin = new Thickness(10, 0, 0, 0),
+                    Background = Brushes.LightGray
+                };
+
+                buttonStack.Children.Add(searchButton);
+                buttonStack.Children.Add(clearButton);
+
+                // Добавляем элементы на панель
+                stackPanel.Children.Add(brandLabel);
+                stackPanel.Children.Add(brandComboBox);
+                stackPanel.Children.Add(modelLabel);
+                stackPanel.Children.Add(modelTextBox);
+                stackPanel.Children.Add(categoryLabel);
+                stackPanel.Children.Add(categoryComboBox);
+                stackPanel.Children.Add(priceLabel);
+                stackPanel.Children.Add(priceStack);
+                stackPanel.Children.Add(stockLabel);
+                stackPanel.Children.Add(stockStack);
+                stackPanel.Children.Add(inStockCheckBox);
+                stackPanel.Children.Add(buttonStack);
+
+                dialog.Content = stackPanel;
+
+                // Обработчики событий
+                searchButton.Click += (s, e) =>
+                {
+                    // Сохраняем фильтры
+                    _currentFilters.Brand = brandComboBox.SelectedItem?.ToString() ?? string.Empty;
+                    _currentFilters.Model = modelTextBox.Text.Trim();
+                    _currentFilters.Category = categoryComboBox.SelectedItem?.ToString() ?? string.Empty;
+                    _currentFilters.InStockOnly = inStockCheckBox.IsChecked ?? false;
+
+                    // Парсим цены
+                    if (decimal.TryParse(minPriceTextBox.Text, out decimal minPriceValue) && minPriceValue >= 0)
+                        _currentFilters.MinPrice = minPriceValue;
+                    else
+                        _currentFilters.MinPrice = null;
+
+                    if (decimal.TryParse(maxPriceTextBox.Text, out decimal maxPriceValue) && maxPriceValue >= 0)
+                        _currentFilters.MaxPrice = maxPriceValue;
+                    else
+                        _currentFilters.MaxPrice = null;
+
+                    // Парсим количество
+                    if (int.TryParse(minStockTextBox.Text, out int minStockValue) && minStockValue >= 0)
+                        _currentFilters.MinStock = minStockValue;
+                    else
+                        _currentFilters.MinStock = null;
+
+                    if (int.TryParse(maxStockTextBox.Text, out int maxStockValue) && maxStockValue >= 0)
+                        _currentFilters.MaxStock = maxStockValue;
+                    else
+                        _currentFilters.MaxStock = null;
+
+                    // Применяем фильтры
+                    ApplySearchAndFilters();
+                    dialog.Close();
+                };
+
+                clearButton.Click += (s, e) =>
+                {
+                    brandComboBox.SelectedItem = "";
+                    modelTextBox.Text = "";
+                    categoryComboBox.SelectedItem = "";
+                    minPriceTextBox.Text = "";
+                    maxPriceTextBox.Text = "";
+                    minStockTextBox.Text = "";
+                    maxStockTextBox.Text = "";
+                    inStockCheckBox.IsChecked = false;
+                };
+
+                dialog.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при открытии диалога поиска: {ex.Message}", "Ошибка");
+            }
+        }
+
         // ===== ОБРАБОТЧИК КНОПКИ ОБНОВЛЕНИЯ =====
         private void RefreshBtn_Click(object sender, RoutedEventArgs e)
         {
             LoadInstruments();
         }
+
 
         // ===== ОБРАБОТЧИК КНОПКИ ПРОДАЖИ =====
         private void SellButton_Click(object sender, RoutedEventArgs e)

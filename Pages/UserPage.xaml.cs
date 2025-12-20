@@ -14,8 +14,6 @@ namespace MusicStoreCatalog.Pages
         {
             InitializeComponent();
             LoadUsers();
-
-            // Подписываемся на событие Click в конструкторе
             AddUserBtn.Click += AddUserBtn_Click;
         }
 
@@ -40,20 +38,40 @@ namespace MusicStoreCatalog.Pages
 
         private void AddUserBtn_Click(object sender, RoutedEventArgs e)
         {
-            // Создаем окно один раз
             var addWindow = new AddConsultantWindow();
             addWindow.Owner = Window.GetWindow(this);
             addWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
-            // Подписываемся на событие успешного добавления
             addWindow.UserAdded += (s, args) =>
             {
-                // Обновляем список при добавлении пользователя
                 LoadUsers();
             };
 
-            // Показываем окно модально
             addWindow.ShowDialog();
+        }
+
+        // ===== НОВЫЙ МЕТОД: Редактирование консультанта =====
+        private void EditUserBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            if (button?.Tag != null && int.TryParse(button.Tag.ToString(), out int userId))
+            {
+                EditConsultant(userId);
+            }
+        }
+
+        private void EditConsultant(int userId)
+        {
+            var editWindow = new EditConsultantWindow(userId);
+            editWindow.Owner = Window.GetWindow(this);
+            editWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+
+            editWindow.ConsultantUpdated += (s, args) =>
+            {
+                LoadUsers();
+            };
+
+            editWindow.ShowDialog();
         }
 
         public void DeleteUserBtn_Click(object sender, RoutedEventArgs e)
