@@ -42,7 +42,7 @@
 
                 <TextBlock Grid.Row="3" Grid.Column="0" Text="Фамилия:" Margin="0,0,10,5"/>
                 <TextBox Grid.Row="3" Grid.Column="1" x:Name="LastNameBox" Margin="0,0,0,5"/>
-
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="Телефон:" Margin="0,0,10,5"/>
                 <TextBox Grid.Row="4" Grid.Column="1" 
          x:Name="PhoneBox"
          Margin="0,0,0,5"
