@@ -1,42 +1,39 @@
-﻿using System;
+﻿using MusicStoreCatalog.Models;
 
-namespace MusicStoreCatalog.Models
+public class OrderRequest
 {
-    public class OrderRequest
-    {
-        public int Id { get; set; }
-        public string DisplayPrice => $"{EstimatedPrice} br";
-        // Если инструмент уже есть в каталоге
-        public int? InstrumentId { get; set; }
-        public Instrument Instrument { get; set; }
+    public int Id { get; set; }
 
-        // Если инструмента еще нет в каталоге
-        public string InstrumentName { get; set; }
-        public string Brand { get; set; }
-        public string Model { get; set; }
-        public string Category { get; set; }
+    // Если инструмент уже есть в каталоге
+    public int? InstrumentId { get; set; }
+    public Instrument Instrument { get; set; }
 
-        // Данные заявки
-        public int Quantity { get; set; }
-        public decimal EstimatedPrice { get; set; }
-        public string Notes { get; set; }
+    // Если инструмента еще нет в каталоге
+    public string InstrumentName { get; set; }
+    public string Brand { get; set; }
+    public string Model { get; set; }
+    public string Category { get; set; }
 
-        // Кто создал заявку
-        public int RequestedById { get; set; }
-        public User RequestedBy { get; set; }
-        public DateTime RequestDate { get; set; }
+    // Данные заявки
+    public int Quantity { get; set; }
+    public decimal EstimatedPrice { get; set; }
+    public string Notes { get; set; }
 
-        // Статус заявки
-        public string Status { get; set; } = "Pending"; // Pending, Approved, Rejected
+    // Кто создал заявку
+    public int RequestedById { get; set; }
+    public User RequestedBy { get; set; }
+    public DateTime RequestDate { get; set; }
 
-        // Кто подтвердил/отклонил
-        public int? ApprovedById { get; set; }
-        public User ApprovedBy { get; set; }
-        public DateTime? ApprovalDate { get; set; }
+    // Статус заявки
+    public string Status { get; set; } = "Pending"; // Pending, Approved, Rejected
 
-        // Для отображения в UI
-        public string DisplayName => InstrumentId.HasValue
-            ? $"{Instrument?.Brand} {Instrument?.Model}"
-            : $"{Brand} {Model}";
-    }
+    // Кто подтвердил/отклонил
+    public int? ApprovedById { get; set; }
+    public User ApprovedBy { get; set; }
+    public DateTime? ApprovalDate { get; set; }
+
+    // Для отображения в UI
+    public string DisplayName => InstrumentId.HasValue
+        ? $"{Instrument?.Brand} {Instrument?.Model}"
+        : $"{Brand} {Model}";
 }

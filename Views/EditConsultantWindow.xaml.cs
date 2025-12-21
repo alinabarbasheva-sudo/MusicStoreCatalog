@@ -1,11 +1,10 @@
 ﻿using MusicStoreCatalog.Data;
 using MusicStoreCatalog.Models;
+using MusicStoreCatalog.Utilities; // Добавляем using
 using System;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 
 namespace MusicStoreCatalog.Views
 {
@@ -21,9 +20,9 @@ namespace MusicStoreCatalog.Views
             _consultantId = consultantId;
             LoadConsultantData();
 
-            // Настройка форматирования телефона
-            PhoneBox.PreviewTextInput += PhoneBox_PreviewTextInput;
-            PhoneBox.TextChanged += PhoneBox_TextChanged;
+            // Используем утилитарные методы
+            PhoneBox.PreviewTextInput += PhoneFormatter.PhoneBox_PreviewTextInput;
+            PhoneBox.TextChanged += PhoneFormatter.PhoneBox_TextChanged;
         }
 
         private void LoadConsultantData()
@@ -31,7 +30,8 @@ namespace MusicStoreCatalog.Views
             try
             {
                 using var context = new AppDbContext();
-                _consultant = context.Users.OfType<Consultant>().FirstOrDefault(c => c.ID == _consultantId);
+                _consultant = context.Users.OfType<Consultant>()
+                    .FirstOrDefault(c => c.ID == _consultantId);
 
                 if (_consultant != null)
                 {
@@ -39,8 +39,6 @@ namespace MusicStoreCatalog.Views
                     FirstNameBox.Text = _consultant.FirstName;
                     LastNameBox.Text = _consultant.LastName;
                     PhoneBox.Text = _consultant.PhoneNumber;
-
-                    // Устанавливаем специализацию
                     SetSpecialization(_consultant.Specialization);
                 }
                 else
@@ -78,27 +76,22 @@ namespace MusicStoreCatalog.Views
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
-            if (!ValidateInput())
-            {
-                return;
-            }
+            if (!ValidateInput()) return;
 
             try
             {
                 using var context = new AppDbContext();
-                var consultant = context.Users.OfType<Consultant>().FirstOrDefault(c => c.ID == _consultantId);
+                var consultant = context.Users.OfType<Consultant>()
+                    .FirstOrDefault(c => c.ID == _consultantId);
 
                 if (consultant != null)
                 {
-                    // Обновляем данные
                     consultant.FirstName = FirstNameBox.Text.Trim();
                     consultant.LastName = LastNameBox.Text.Trim();
                     consultant.PhoneNumber = PhoneBox.Text.Trim();
                     consultant.Specialization = (SpecializationCombo.SelectedItem as ComboBoxItem)?.Content.ToString();
 
                     context.SaveChanges();
-
-                    // Вызываем событие обновления
                     ConsultantUpdated?.Invoke(this, EventArgs.Empty);
 
                     MessageBox.Show($"✅ Данные консультанта обновлены!\n\n" +
@@ -138,39 +131,6 @@ namespace MusicStoreCatalog.Views
             return true;
         }
 
-        // Форматирование телефона
-        private void PhoneBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
-        {
-            Regex regex = new Regex("[^0-9]+");
-            e.Handled = regex.IsMatch(e.Text);
-        }
-
-        private void PhoneBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            var textBox = sender as TextBox;
-            if (textBox == null) return;
-
-            string text = textBox.Text.Replace(" ", "").Replace("-", "").Replace(")", "").Replace("(", "");
-
-            if (text.Length >= 4)
-            {
-                textBox.Text = FormatPhoneNumber(text);
-                textBox.CaretIndex = textBox.Text.Length;
-            }
-        }
-
-        private string FormatPhoneNumber(string phone)
-        {
-            if (phone.Length <= 4) return phone;
-
-            string result = "+375 (";
-
-            if (phone.Length > 4) result += phone.Substring(4, Math.Min(2, phone.Length - 4));
-            if (phone.Length > 6) result += ")-" + phone.Substring(6, Math.Min(3, phone.Length - 6));
-            if (phone.Length > 9) result += "-" + phone.Substring(9, Math.Min(2, phone.Length - 9));
-            if (phone.Length > 11) result += "-" + phone.Substring(11, Math.Min(2, phone.Length - 11));
-
-            return result;
-        }
+        // УДАЛИТЬ старые методы форматирования телефона
     }
 }

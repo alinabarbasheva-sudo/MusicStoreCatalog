@@ -43,13 +43,15 @@
             </ComboBox>
             <!-- Цена -->
             <TextBlock Text="Цена (br) *" Margin="0,0,0,5"/>
-            <TextBox x:Name="PriceBox" Margin="0,0,0,10" 
-                     PreviewTextInput="DecimalValidationTextBox"/>
-
+            <TextBox x:Name="PriceBox" 
+         Margin="0,0,0,10"
+         PreviewTextInput="DecimalValidationTextBox"/>
             <!-- Количество -->
             <TextBlock Text="Количество на складе *" Margin="0,0,0,5"/>
-            <TextBox x:Name="QuantityBox" Text="1" Margin="0,0,0,15"
-                     PreviewTextInput="NumberValidationTextBox"/>
+            <TextBox x:Name="QuantityBox" 
+         Text="1" 
+         Margin="0,0,0,15"
+         PreviewTextInput="NumberValidationTextBox"/>
             <!-- В форму добавления инструмента добавьте поле описания -->
             <TextBlock Text="Описание" Margin="0,0,0,5"/>
             <TextBox x:Name="DescriptionBox" 

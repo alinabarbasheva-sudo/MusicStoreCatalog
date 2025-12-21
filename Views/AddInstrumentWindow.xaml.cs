@@ -1,12 +1,11 @@
 ﻿using MusicStoreCatalog.Data;
 using MusicStoreCatalog.Models;
+using MusicStoreCatalog.Utilities;
 using System;
 using System.Globalization;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 
 namespace MusicStoreCatalog.Views
 {
@@ -28,15 +27,12 @@ namespace MusicStoreCatalog.Views
         private void SaveBtn_Click(object sender, RoutedEventArgs e)
         {
             if (!ValidateInput())
-            {
                 return;
-            }
 
             try
             {
                 using var context = new AppDbContext();
 
-                // Получаем выбранную категорию правильно
                 string selectedCategory = GetSelectedCategory();
                 if (string.IsNullOrEmpty(selectedCategory))
                 {
@@ -54,15 +50,15 @@ namespace MusicStoreCatalog.Views
                 if (exists)
                 {
                     MessageBox.Show("Такой инструмент уже есть в каталоге",
-                                  "Внимание",
-                                  MessageBoxButton.OK,
-                                  MessageBoxImage.Warning);
+                        "Внимание",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
                     return;
                 }
 
-                // Парсим цену с учетом культуры (запятая/точка)
-                decimal price;
-                if (!decimal.TryParse(PriceBox.Text.Replace(",", "."), NumberStyles.Any, CultureInfo.InvariantCulture, out price))
+                // Парсим цену
+                if (!decimal.TryParse(PriceBox.Text.Replace(",", "."),
+                    NumberStyles.Any, CultureInfo.InvariantCulture, out decimal price))
                 {
                     MessageBox.Show("Введите корректную цену", "Ошибка");
                     PriceBox.Focus();
@@ -105,28 +101,20 @@ namespace MusicStoreCatalog.Views
             }
         }
 
-        // Метод для получения выбранной категории
         private string GetSelectedCategory()
         {
             if (CategoryCombo.SelectedItem is ComboBoxItem selectedItem)
-            {
                 return selectedItem.Content?.ToString();
-            }
             else if (CategoryCombo.SelectedValue != null)
-            {
                 return CategoryCombo.SelectedValue.ToString();
-            }
             else if (!string.IsNullOrEmpty(CategoryCombo.Text))
-            {
                 return CategoryCombo.Text;
-            }
 
             return null;
         }
 
         private bool ValidateInput()
         {
-            // Проверка бренда
             if (string.IsNullOrWhiteSpace(BrandBox.Text))
             {
                 MessageBox.Show("Введите бренд инструмента", "Ошибка");
@@ -134,7 +122,6 @@ namespace MusicStoreCatalog.Views
                 return false;
             }
 
-            // Проверка модели
             if (string.IsNullOrWhiteSpace(ModelBox.Text))
             {
                 MessageBox.Show("Введите модель инструмента", "Ошибка");
@@ -142,7 +129,6 @@ namespace MusicStoreCatalog.Views
                 return false;
             }
 
-            // Проверка категории
             string category = GetSelectedCategory();
             if (string.IsNullOrEmpty(category))
             {
@@ -151,7 +137,6 @@ namespace MusicStoreCatalog.Views
                 return false;
             }
 
-            // Проверка цены
             if (string.IsNullOrWhiteSpace(PriceBox.Text))
             {
                 MessageBox.Show("Введите цену инструмента", "Ошибка");
@@ -159,16 +144,6 @@ namespace MusicStoreCatalog.Views
                 return false;
             }
 
-            // Пробуем распарсить цену
-            if (!decimal.TryParse(PriceBox.Text.Replace(",", "."), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal price) || price <= 0)
-            {
-                MessageBox.Show("Введите корректную цену (больше 0)\nПример: 15000 или 15000.50", "Ошибка");
-                PriceBox.Focus();
-                PriceBox.SelectAll();
-                return false;
-            }
-
-            // Проверка количества
             if (string.IsNullOrWhiteSpace(QuantityBox.Text))
             {
                 MessageBox.Show("Введите количество инструментов", "Ошибка");
@@ -176,43 +151,18 @@ namespace MusicStoreCatalog.Views
                 return false;
             }
 
-            if (!int.TryParse(QuantityBox.Text, out int quantity) || quantity < 0)
-            {
-                MessageBox.Show("Введите корректное количество (0 или больше)", "Ошибка");
-                QuantityBox.Focus();
-                QuantityBox.SelectAll();
-                return false;
-            }
-
             return true;
         }
 
-        private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
+        // Обработчики валидации
+        private void NumberValidationTextBox(object sender, System.Windows.Input.TextCompositionEventArgs e)
         {
-            // Разрешаем только цифры
-            Regex regex = new Regex("[^0-9]+");
-            e.Handled = regex.IsMatch(e.Text);
+            ValidationHelper.NumberValidationTextBox(sender, e);
         }
 
-        private void DecimalValidationTextBox(object sender, TextCompositionEventArgs e)
+        private void DecimalValidationTextBox(object sender, System.Windows.Input.TextCompositionEventArgs e)
         {
-            var textBox = sender as TextBox;
-            string newText = textBox.Text + e.Text;
-
-            // Разрешаем цифры, одну точку или запятую
-            Regex regex = new Regex(@"^[0-9]*[,.]?[0-9]*$");
-            e.Handled = !regex.IsMatch(newText);
-        }
-
-        // Обработчик изменения текста в поле цены
-        private void PriceBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            // Автоматически заменяем запятую на точку
-            if (PriceBox.Text.Contains(","))
-            {
-                PriceBox.Text = PriceBox.Text.Replace(",", ".");
-                PriceBox.CaretIndex = PriceBox.Text.Length;
-            }
+            ValidationHelper.DecimalValidationTextBox(sender, e);
         }
     }
 }

@@ -1,11 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MusicStoreCatalog.Data;
 using MusicStoreCatalog.Models;
+using MusicStoreCatalog.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 
 namespace MusicStoreCatalog.Pages
 {
@@ -38,18 +40,8 @@ namespace MusicStoreCatalog.Pages
                 ReportDateText.Text = $"Отчет на {DateTime.Now:dd.MM.yyyy HH:mm}";
             }
 
-            // Загружаем данные после полной инициализации UI
-            Dispatcher.BeginInvoke(new Action(() =>
-            {
-                try
-                {
-                    LoadAllReports();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Ошибка при загрузке отчетов: {ex.Message}");
-                }
-            }), System.Windows.Threading.DispatcherPriority.Background);
+            // Загружаем данные
+            LoadAllReports();
         }
 
         private void LoadAllReports()
@@ -58,28 +50,23 @@ namespace MusicStoreCatalog.Pages
             {
                 using var context = new AppDbContext();
 
-                // Проверяем подключение к базе
                 if (!context.Database.CanConnect())
                 {
-                    MessageBox.Show("Нет подключения к базе данных", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("Нет подключения к базе данных", "Ошибка",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
-                // 1. Загружаем ключевые метрики
                 LoadKeyMetrics(context);
-
-                // 2. Загружаем продажи по консультантам
                 LoadSalesByConsultant(context);
-
-                // 3. Загружаем статистику заявок
                 LoadOrderStatistics(context);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Не удалось загрузить отчеты: {ex.Message}",
-                              "Ошибка",
-                              MessageBoxButton.OK,
-                              MessageBoxImage.Error);
+                    "Ошибка",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
         }
 
@@ -93,18 +80,11 @@ namespace MusicStoreCatalog.Pages
                 {
                     totalStockValue = context.Instruments.Sum(i => i.Price * i.StockQuantity);
                 }
-
-                if (TotalStockValue != null)
-                {
-                    TotalStockValue.Text = $"{totalStockValue:N0} br";
-                }
+                TotalStockValue.Text = $"{totalStockValue:N0} br";
 
                 // 2. Всего инструментов
                 int totalInstruments = context.Instruments?.Count() ?? 0;
-                if (TotalInstruments != null)
-                {
-                    TotalInstruments.Text = totalInstruments.ToString();
-                }
+                TotalInstruments.Text = totalInstruments.ToString();
 
                 // 3. Инструменты по категориям
                 string categoriesText = "нет данных";
@@ -126,20 +106,12 @@ namespace MusicStoreCatalog.Pages
                             categoriesText = categoriesText.Substring(0, 47) + "...";
                     }
                 }
-
-                if (InstrumentsByCategory != null)
-                {
-                    InstrumentsByCategory.Text = categoriesText;
-                }
+                InstrumentsByCategory.Text = categoriesText;
 
                 // 4. Активные консультанты
                 var consultants = context.Users?.OfType<Consultant>();
                 int activeConsultants = consultants?.Count() ?? 0;
-
-                if (ActiveConsultants != null)
-                {
-                    ActiveConsultants.Text = activeConsultants.ToString();
-                }
+                ActiveConsultants.Text = activeConsultants.ToString();
 
                 // 5. Лучший консультант
                 string topConsultantText = "Лучший: нет данных";
@@ -155,27 +127,15 @@ namespace MusicStoreCatalog.Pages
                         topConsultantText = $"Лучший: {topConsultant.FirstName} {topConsultant.LastName} ({topConsultant.SalesCount} продаж)";
                     }
                 }
-
-                if (TopConsultant != null)
-                {
-                    TopConsultant.Text = topConsultantText;
-                }
+                TopConsultant.Text = topConsultantText;
 
                 // 6. Активные заявки
                 int pendingOrders = context.OrderRequests?.Count(o => o.Status == "Pending") ?? 0;
-
-                if (PendingOrders != null)
-                {
-                    PendingOrders.Text = pendingOrders.ToString();
-                }
+                PendingOrders.Text = pendingOrders.ToString();
 
                 int approvedOrders = context.OrderRequests?.Count(o => o.Status == "Approved") ?? 0;
                 int rejectedOrders = context.OrderRequests?.Count(o => o.Status == "Rejected") ?? 0;
-
-                if (OrdersStatus != null)
-                {
-                    OrdersStatus.Text = $"{approvedOrders} подтверждено, {rejectedOrders} отклонено";
-                }
+                OrdersStatus.Text = $"{approvedOrders} подтверждено, {rejectedOrders} отклонено";
             }
             catch (Exception ex)
             {
@@ -190,7 +150,6 @@ namespace MusicStoreCatalog.Pages
                 if (SalesByConsultantList == null) return;
 
                 var consultants = context.Users?.OfType<Consultant>();
-
                 if (consultants == null || !consultants.Any())
                 {
                     SalesByConsultantList.ItemsSource = new List<SalesByConsultant>();
@@ -224,7 +183,6 @@ namespace MusicStoreCatalog.Pages
         {
             try
             {
-                // Статистика по заявкам
                 var pendingCount = context.OrderRequests?.Count(o => o.Status == "Pending") ?? 0;
                 var approvedCount = context.OrderRequests?.Count(o => o.Status == "Approved") ?? 0;
                 var rejectedCount = context.OrderRequests?.Count(o => o.Status == "Rejected") ?? 0;
@@ -233,7 +191,6 @@ namespace MusicStoreCatalog.Pages
                 if (ApprovedCount != null) ApprovedCount.Text = approvedCount.ToString();
                 if (RejectedCount != null) RejectedCount.Text = rejectedCount.ToString();
 
-                // Общее количество подтвержденных инструментов
                 var approvedQuantity = context.OrderRequests?
                     .Where(o => o.Status == "Approved")
                     .Sum(o => o.Quantity) ?? 0;
@@ -249,8 +206,7 @@ namespace MusicStoreCatalog.Pages
             }
         }
 
-        // ===== ОБРАБОТЧИКИ СОБЫТИЙ =====
-
+        // Обработчики событий
         private void RefreshBtn_Click(object sender, RoutedEventArgs e)
         {
             LoadAllReports();
@@ -261,9 +217,9 @@ namespace MusicStoreCatalog.Pages
             }
 
             MessageBox.Show("Данные отчетов обновлены!",
-                          "Обновление",
-                          MessageBoxButton.OK,
-                          MessageBoxImage.Information);
+                "Обновление",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
         }
 
         private void PeriodCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -272,10 +228,11 @@ namespace MusicStoreCatalog.Pages
         }
     }
 
-    // Конвертер для рейтинга
-    public class RatingToVisibilityConverter : System.Windows.Data.IValueConverter
+    // Конвертер для рейтинга (должен быть в том же namespace)
+    public class RatingToVisibilityConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        public object Convert(object value, Type targetType, object parameter,
+            System.Globalization.CultureInfo culture)
         {
             if (value is int rating && parameter is string paramString)
             {
@@ -287,7 +244,8 @@ namespace MusicStoreCatalog.Pages
             return Visibility.Collapsed;
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        public object ConvertBack(object value, Type targetType, object parameter,
+            System.Globalization.CultureInfo culture)
         {
             throw new NotImplementedException();
         }

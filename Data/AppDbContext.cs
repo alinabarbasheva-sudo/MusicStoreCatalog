@@ -1,11 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MusicStoreCatalog.Models;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MusicStoreCatalog.Data
 {
@@ -19,15 +14,45 @@ namespace MusicStoreCatalog.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            string projectPath = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName;
-            string dbPath = Path.Combine(projectPath, "MusicStore.db");
+            string dbPath = GetDatabasePath();
             optionsBuilder.UseSqlite($"Data Source={dbPath}");
+
+            // Включаем подробные логи для отладки
+            optionsBuilder.LogTo(System.Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information);
+            optionsBuilder.EnableSensitiveDataLogging();
+        }
+
+        private string GetDatabasePath()
+        {
+            // Пробуем несколько путей
+            string[] possiblePaths =
+            {
+                Path.Combine(Directory.GetCurrentDirectory(), "MusicStore.db"),
+                Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "MusicStore.db"),
+                "MusicStore.db"
+            };
+
+            foreach (var path in possiblePaths)
+            {
+                if (File.Exists(path) || Directory.Exists(Path.GetDirectoryName(path)))
+                {
+                    return path;
+                }
+            }
+
+            // Если ничего не нашли, создаем в текущей директории
+            return "MusicStore.db";
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
+            // Настройка TPH (Table Per Hierarchy) для наследования
+            modelBuilder.Entity<User>()
+                .HasDiscriminator<string>("UserType")
+                .HasValue<Admin>("Admin")
+                .HasValue<Consultant>("Consultant");
 
             // Настройка отношения OrderRequest -> RequestedBy
             modelBuilder.Entity<OrderRequest>()
@@ -49,6 +74,37 @@ namespace MusicStoreCatalog.Data
                 .WithMany()
                 .HasForeignKey(or => or.InstrumentId)
                 .OnDelete(DeleteBehavior.Restrict);
+        }
+
+        // Метод для гарантированного создания БД
+        public void EnsureDatabaseCreated()
+        {
+            try
+            {
+                Console.WriteLine($"Создаем/проверяем БД по пути: {GetDatabasePath()}");
+
+                // Проверяем, существует ли файл БД
+                string dbPath = GetDatabasePath();
+                bool dbExists = File.Exists(dbPath);
+
+                Console.WriteLine($"Файл БД существует: {dbExists}");
+
+                // Создаем БД если нужно
+                Database.EnsureCreated();
+
+                Console.WriteLine($"Проверка создания таблиц...");
+                Console.WriteLine($"Таблица Users существует: {Users != null}");
+
+                if (!dbExists)
+                {
+                    Console.WriteLine("База данных создана впервые");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при создании БД: {ex.Message}");
+                throw;
+            }
         }
     }
 }

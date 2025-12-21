@@ -24,21 +24,5 @@ namespace MusicStoreCatalog.Models
             }
         }
 
-        // Свойство для отображения рейтинга текстом
-        public string RatingText
-        {
-            get
-            {
-                return Rating switch
-                {
-                    5 => "⭐⭐⭐⭐⭐",
-                    4 => "⭐⭐⭐⭐☆",
-                    3 => "⭐⭐⭐☆☆",
-                    2 => "⭐⭐☆☆☆",
-                    1 => "⭐☆☆☆☆",
-                    _ => "☆☆☆☆☆"
-                };
-            }
-        }
     }
 }

@@ -15,7 +15,58 @@ namespace MusicStoreCatalog.Views
         {
             InitializeComponent();
 
-            // Проверяем, первый ли запуск
+            // ВАЖНО: Сначала создаем БД, потом проверяем первый запуск
+            InitializeDatabase();
+
+            // Теперь проверяем первый запуск
+            CheckFirstRun();
+
+            // Центрируем окно
+            this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+
+            // Фокус на поле логина
+            Loaded += (s, e) => UsernameBox.Focus();
+
+            // Обработка Enter
+            UsernameBox.KeyDown += (s, e) =>
+            {
+                if (e.Key == Key.Enter)
+                    PasswordBox.Focus();
+            };
+
+            PasswordBox.KeyDown += (s, e) =>
+            {
+                if (e.Key == Key.Enter)
+                    LoginButton_Click(null, null);
+            };
+        }
+
+        private void InitializeDatabase()
+        {
+            try
+            {
+                Console.WriteLine("=== Инициализация базы данных ===");
+
+                using var context = new AppDbContext();
+                context.EnsureDatabaseCreated();
+
+                Console.WriteLine("База данных инициализирована");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка инициализации базы данных: {ex.Message}\n\n" +
+                              $"Попробуйте удалить файл MusicStore.db и перезапустить приложение.",
+                              "Критическая ошибка",
+                              MessageBoxButton.OK,
+                              MessageBoxImage.Error);
+
+                // Можно закрыть приложение или продолжить
+                // Application.Current.Shutdown();
+            }
+        }
+
+        private void CheckFirstRun()
+        {
             if (SeedService.IsFirstRun())
             {
                 // Создаем только админа
@@ -30,25 +81,6 @@ namespace MusicStoreCatalog.Views
                               MessageBoxButton.OK,
                               MessageBoxImage.Information);
             }
-
-            // Центрируем окно на экране
-            this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-
-            // Фокус на поле логина при загрузке
-            Loaded += (s, e) => UsernameBox.Focus();
-
-            // Обработка нажатия Enter
-            UsernameBox.KeyDown += (s, e) =>
-            {
-                if (e.Key == Key.Enter)
-                    PasswordBox.Focus();
-            };
-
-            PasswordBox.KeyDown += (s, e) =>
-            {
-                if (e.Key == Key.Enter)
-                    LoginButton_Click(null, null);
-            };
         }
 
         private void LoginButton_Click(object sender, RoutedEventArgs e)
@@ -65,7 +97,13 @@ namespace MusicStoreCatalog.Views
 
             if (user != null)
             {
-                // ВАЖНО: Используем PasswordBox.Password, а не .Text
+                if (string.IsNullOrEmpty(PasswordBox.Password))
+                {
+                    MessageBox.Show("Введите пароль");
+                    PasswordBox.Focus();
+                    return;
+                }
+
                 if (BCrypt.Net.BCrypt.Verify(PasswordBox.Password, user.PasswordHash))
                 {
                     if (user is Admin)

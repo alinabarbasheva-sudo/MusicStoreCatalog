@@ -10,8 +10,7 @@ namespace MusicStoreCatalog.Models
         public string Category { get; set; }
         public decimal Price { get; set; }
         public int StockQuantity { get; set; }
-        public string Description { get; set; } = "";// Добавьте это поле обратно
-        public string SerialNumber { get; set; } = "";// Добавьте это поле обратно
+
         // Для отображения в UI
         public string DisplayName => $"{Brand} {Model}";
     }

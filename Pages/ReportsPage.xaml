@@ -5,7 +5,6 @@
              Height="700" Width="1000">
 
     <UserControl.Resources>
-        <!-- Конвертер для рейтинга звезд -->
         <local:RatingToVisibilityConverter x:Key="RatingConverter"/>
     </UserControl.Resources>
 
@@ -33,20 +32,20 @@
             <!-- Кнопки управления -->
             <Border Background="#f8f9fa" Padding="15" CornerRadius="8" Margin="0,0,0,20">
                 <WrapPanel>
-                    <Button x:Name="RefreshBtn" 
-                            Content="🔄 Обновить данные" 
-                            Padding="12,8" 
-                            Margin="0,0,10,5"
-                            FontWeight="SemiBold"
-                            Background="#3498db"
-                            Foreground="White"
-                            Click="RefreshBtn_Click"/>
+                    <Button x:Name="RefreshBtn"
+            Content="🔄 Обновить данные"
+            Padding="12,8"
+            Margin="0,0,10,5"
+            FontWeight="SemiBold"
+            Background="#3498db"
+            Foreground="White"
+            Click="RefreshBtn_Click"/>
 
-                    <ComboBox x:Name="PeriodCombo" 
-                              Width="150" 
-                              Margin="0,0,10,5"
-                              SelectedIndex="0"
-                              SelectionChanged="PeriodCombo_SelectionChanged">
+                    <ComboBox x:Name="PeriodCombo"
+              Width="150"
+              Margin="0,0,10,5"
+              SelectedIndex="0"
+              SelectionChanged="PeriodCombo_SelectionChanged">
                         <ComboBoxItem Content="За сегодня"/>
                         <ComboBoxItem Content="За неделю"/>
                         <ComboBoxItem Content="За месяц"/>

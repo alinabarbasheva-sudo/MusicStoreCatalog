@@ -2,6 +2,7 @@
 using MusicStoreCatalog.Data;
 using MusicStoreCatalog.Models;
 using MusicStoreCatalog.Views;
+using MusicStoreCatalog.Utilities;
 using System;
 using System.Linq;
 using System.Windows;
@@ -32,84 +33,81 @@ namespace MusicStoreCatalog.Pages
             if (user != null)
             {
                 _currentUserId = user.ID;
-
-                // Основная информация
-                LoginText.Text = user.Login;
-                FirstNameText.Text = user.FirstName;
-                LastNameText.Text = user.LastName;
-                PhoneText.Text = user.PhoneNumber;
-
-                // Определяем роль
-                if (user is Admin)
-                {
-                    RoleText.Text = "Администратор";
-                    _currentUserRole = "Администратор";
-
-                    // Скрываем статистику для администратора
-                    SalesStatsBorder.Visibility = Visibility.Collapsed;
-                }
-                else if (user is Consultant consultant)
-                {
-                    _currentConsultant = consultant;
-                    RoleText.Text = "Консультант";
-                    _currentUserRole = "Консультант";
-
-                    // Добавляем специализацию
-                    AddSpecializationRow(consultant.Specialization ?? "Не указана");
-
-                    // Показываем и загружаем статистику
-                    SalesStatsBorder.Visibility = Visibility.Visible;
-                    LoadSalesStatistics(context, consultant);
-                }
-
-                // Управляем видимостью кнопок
+                LoadBasicInfo(user);
+                DetermineUserRole(context, user);
                 UpdateButtonVisibility();
             }
             else
             {
-                MessageBox.Show("Пользователь не найден", "Ошибка",
-                              MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError("Пользователь не найден");
             }
         }
 
-        // Метод для добавления строки специализации
+        private void LoadBasicInfo(User user)
+        {
+            LoginText.Text = user.Login;
+            FirstNameText.Text = user.FirstName;
+            LastNameText.Text = user.LastName;
+            PhoneText.Text = user.PhoneNumber;
+        }
+
+        private void DetermineUserRole(AppDbContext context, User user)
+        {
+            if (user is Admin admin)
+            {
+                _currentUserRole = "Администратор";
+                RoleText.Text = "Администратор";
+                SalesStatsBorder.Visibility = Visibility.Collapsed;
+            }
+            else if (user is Consultant consultant)
+            {
+                _currentConsultant = consultant;
+                _currentUserRole = "Консультант";
+                RoleText.Text = "Консультант";
+                LoadConsultantInfo(consultant);
+                LoadSalesStatistics(context, consultant);
+                SalesStatsBorder.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void LoadConsultantInfo(Consultant consultant)
+        {
+            AddSpecializationRow(consultant.Specialization ?? "Не указана");
+        }
+
         private void AddSpecializationRow(string specialization)
         {
-            // Очищаем предыдущую строку специализации, если была
             ClearSpecializationRow();
 
-            // Добавляем новую строку в сетку
             WorkInfoGrid.RowDefinitions.Add(new RowDefinition() { Height = GridLength.Auto });
 
-            // Заголовок "Специализация:"
             var specializationLabel = new TextBlock
             {
                 Text = "Специализация:",
                 FontWeight = FontWeights.SemiBold,
                 Margin = new Thickness(0, 0, 10, 5)
             };
-            Grid.SetRow(specializationLabel, 1);
-            Grid.SetColumn(specializationLabel, 0);
-            WorkInfoGrid.Children.Add(specializationLabel);
 
-            // Значение специализации
             var specializationText = new TextBlock
             {
                 Text = specialization,
                 Margin = new Thickness(0, 0, 0, 5)
             };
+
+            Grid.SetRow(specializationLabel, 1);
+            Grid.SetColumn(specializationLabel, 0);
             Grid.SetRow(specializationText, 1);
             Grid.SetColumn(specializationText, 1);
+
+            WorkInfoGrid.Children.Add(specializationLabel);
             WorkInfoGrid.Children.Add(specializationText);
         }
 
-        // Метод для очистки строки специализации
         private void ClearSpecializationRow()
         {
-            // Удаляем все элементы специализации
             var elementsToRemove = WorkInfoGrid.Children
                 .OfType<FrameworkElement>()
-                .Where(e => e.Name == "SpecializationLabel" || e.Name == "SpecializationText")
+                .Where(e => Grid.GetRow(e) == 1)
                 .ToList();
 
             foreach (var element in elementsToRemove)
@@ -117,88 +115,70 @@ namespace MusicStoreCatalog.Pages
                 WorkInfoGrid.Children.Remove(element);
             }
 
-            // Убираем лишние строки (оставляем только первую)
             while (WorkInfoGrid.RowDefinitions.Count > 1)
             {
                 WorkInfoGrid.RowDefinitions.RemoveAt(1);
             }
         }
 
-        // ===== НОВЫЙ МЕТОД: Загрузка статистики продаж =====
         private void LoadSalesStatistics(AppDbContext context, Consultant consultant)
         {
             try
             {
-                // 1. Всего продаж
+                // Всего продаж
                 TotalSalesText.Text = consultant.SalesCount.ToString();
 
-                // 2. Расчет рейтинга (звезды)
-                int rating = CalculateRating(consultant.SalesCount);
-                UpdateRatingStars(rating);
+                // Рейтинг
+                UpdateRatingStars(consultant.Rating);
 
-                // 3. Место среди всех консультантов
+                // Место среди всех консультантов
                 var allConsultants = context.Users
                     .OfType<Consultant>()
                     .OrderByDescending(c => c.SalesCount)
                     .ToList();
 
                 int rankAll = allConsultants.FindIndex(c => c.ID == consultant.ID) + 1;
-                int totalConsultants = allConsultants.Count;
+                RankAllText.Text = $"{rankAll} из {allConsultants.Count}";
 
-                RankAllText.Text = $"{rankAll} из {totalConsultants}";
-
-                // 4. Место среди консультантов своей специализации
-                if (!string.IsNullOrEmpty(consultant.Specialization))
-                {
-                    var sameSpecializationConsultants = allConsultants
-                        .Where(c => c.Specialization == consultant.Specialization)
-                        .OrderByDescending(c => c.SalesCount)
-                        .ToList();
-
-                    if (sameSpecializationConsultants.Any())
-                    {
-                        int rankSpecialization = sameSpecializationConsultants.FindIndex(c => c.ID == consultant.ID) + 1;
-                        int totalInSpecialization = sameSpecializationConsultants.Count;
-
-                        RankSpecializationText.Text = $"{rankSpecialization} из {totalInSpecialization}";
-                    }
-                    else
-                    {
-                        RankSpecializationText.Text = "1 из 1";
-                    }
-                }
-                else
-                {
-                    RankSpecializationText.Text = "Специализация не указана";
-                }
+                // Место по специализации
+                UpdateSpecializationRank(consultant, allConsultants);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка загрузки статистики: {ex.Message}", "Ошибка");
+                MessageHelper.ShowError($"Ошибка загрузки статистики: {ex.Message}");
             }
         }
 
-        // Расчет рейтинга по количеству продаж
-        private int CalculateRating(int salesCount)
+        private void UpdateSpecializationRank(Consultant consultant, System.Collections.Generic.List<Consultant> allConsultants)
         {
-            return salesCount switch
+            if (!string.IsNullOrEmpty(consultant.Specialization))
             {
-                >= 50 => 5,
-                >= 40 => 4,
-                >= 30 => 3,
-                >= 20 => 2,
-                >= 10 => 1,
-                _ => 0
-            };
+                var sameSpecializationConsultants = allConsultants
+                    .Where(c => c.Specialization == consultant.Specialization)
+                    .OrderByDescending(c => c.SalesCount)
+                    .ToList();
+
+                if (sameSpecializationConsultants.Any())
+                {
+                    int rankSpecialization = sameSpecializationConsultants.FindIndex(c => c.ID == consultant.ID) + 1;
+                    RankSpecializationText.Text = $"{rankSpecialization} из {sameSpecializationConsultants.Count}";
+                }
+                else
+                {
+                    RankSpecializationText.Text = "1 из 1";
+                }
+            }
+            else
+            {
+                RankSpecializationText.Text = "Специализация не указана";
+            }
         }
 
-        // Обновление звезд рейтинга
         private void UpdateRatingStars(int rating)
         {
-            // Очищаем панель
             RatingStarsPanel.Children.Clear();
 
-            // Добавляем золотые звезды за рейтинг
+            // Золотые звезды
             for (int i = 0; i < rating; i++)
             {
                 var star = new TextBlock
@@ -211,7 +191,7 @@ namespace MusicStoreCatalog.Pages
                 RatingStarsPanel.Children.Add(star);
             }
 
-            // Добавляем серые звезды для недостающих
+            // Серые звезды
             for (int i = rating; i < 5; i++)
             {
                 var star = new TextBlock
@@ -227,44 +207,29 @@ namespace MusicStoreCatalog.Pages
 
         private void UpdateButtonVisibility()
         {
-            if (_currentUserRole == "Администратор")
-            {
-                EditButton.Visibility = Visibility.Visible;
-                EditButton.IsEnabled = true;
-                ChangePasswordButton.Visibility = Visibility.Visible;
-                ChangePasswordButton.IsEnabled = true;
-            }
-            else
-            {
-                EditButton.Visibility = Visibility.Collapsed;
-                EditButton.IsEnabled = false;
-                ChangePasswordButton.Visibility = Visibility.Collapsed;
-                ChangePasswordButton.IsEnabled = false;
-            }
+            bool isAdmin = _currentUserRole == "Администратор";
+
+            EditButton.Visibility = isAdmin ? Visibility.Visible : Visibility.Collapsed;
+            EditButton.IsEnabled = isAdmin;
+
+            ChangePasswordButton.Visibility = isAdmin ? Visibility.Visible : Visibility.Collapsed;
+            ChangePasswordButton.IsEnabled = isAdmin;
         }
 
         private void EditButton_Click(object sender, RoutedEventArgs e)
         {
             if (_currentUserRole != "Администратор")
             {
-                MessageBox.Show("Только администратор может редактировать профиль",
-                              "Ошибка",
-                              MessageBoxButton.OK,
-                              MessageBoxImage.Warning);
+                MessageHelper.ShowWarning("Только администратор может редактировать профиль");
                 return;
             }
 
             var editWindow = new EditProfileWindow(_currentUserId);
             editWindow.Owner = Window.GetWindow(this);
-
             editWindow.ProfileUpdated += (s, args) =>
             {
                 LoadUserData(_currentUserLogin);
-
-                MessageBox.Show("Профиль успешно обновлен!",
-                              "Успех",
-                              MessageBoxButton.OK,
-                              MessageBoxImage.Information);
+                MessageHelper.ShowSuccess("Профиль успешно обновлен!");
             };
 
             editWindow.ShowDialog();
@@ -274,10 +239,7 @@ namespace MusicStoreCatalog.Pages
         {
             if (_currentUserRole != "Администратор")
             {
-                MessageBox.Show("Только администратор может менять пароль",
-                              "Ошибка",
-                              MessageBoxButton.OK,
-                              MessageBoxImage.Warning);
+                MessageHelper.ShowWarning("Только администратор может менять пароль");
                 return;
             }
 

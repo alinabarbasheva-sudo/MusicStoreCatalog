@@ -43,12 +43,13 @@
                 <TextBlock Grid.Row="3" Grid.Column="0" Text="Фамилия:" Margin="0,0,10,5"/>
                 <TextBox Grid.Row="3" Grid.Column="1" x:Name="LastNameBox" Margin="0,0,0,5"/>
 
-                <TextBlock Grid.Row="4" Grid.Column="0" Text="Телефон:" Margin="0,0,10,5"/>
-                <TextBox Grid.Row="4" Grid.Column="1" x:Name="PhoneBox" Margin="0,0,0,5"
-                         Text="+375 (" MaxLength="19"
-                         PreviewTextInput="PhoneBox_PreviewTextInput"
-                         TextChanged="PhoneBox_TextChanged"/>
-
+                <TextBox Grid.Row="4" Grid.Column="1" 
+         x:Name="PhoneBox"
+         Margin="0,0,0,5"
+         Text="+375 (" 
+         MaxLength="19"
+         PreviewTextInput="PhoneBox_PreviewTextInput"
+         TextChanged="PhoneBox_TextChanged"/>
                 <TextBlock Grid.Row="5" Grid.Column="0" Text="Специализация:" Margin="0,0,10,5"/>
                 <ComboBox Grid.Row="5" Grid.Column="1" x:Name="SpecializationCombo" Margin="0,0,0,5">
                     <ComboBoxItem Content="Гитары"/>
